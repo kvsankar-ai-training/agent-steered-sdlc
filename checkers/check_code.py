@@ -1,0 +1,278 @@
+#!/usr/bin/env python3
+"""Deterministic mechanical verifier for TDD code against a Work Plan.
+
+Runs the test suite, checks labeled coverage output, verifies every plan PR-ID
+and every spec/design FR/AT/COMP is referenced by a named test, looks for nearby
+assertions, and reports git diff/TDD evidence when available. These are
+structural gates, not proof of semantic correctness. Exits 0 only when every
+gate passes. No semantic judgment, reproducible.
+
+Usage:
+    python check_code.py --plan plan.md [--tests-argv '["pytest","-q"]']
+                         [--tests "pytest -q"] [--tests-shell]
+                         [--cov-min 80] [--tests-dir tests] [--src .]
+                         [--max-loc 600] [--max-diff-loc 300]
+                         [--src-ext .py,.ts,.tsx,.js,.jsx]
+                         [--spec spec.md] [--design design.md] [--json]
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import shlex
+import subprocess
+import sys
+from pathlib import Path
+
+PR = re.compile(r"\bPR-[A-Z][A-Z0-9]*-\d+\b")
+ID = re.compile(r"\b(?:(?:FR|AT)-[A-Z][A-Z0-9]*-\d+|COMP-[A-Z][A-Z0-9]*)\b")
+SKIP = re.compile(r"\b(skip|skipif|xfail)\b", re.I)
+VAGUE = re.compile(r"\b(TODO|FIXME|XXX|etc\.)\b", re.I)
+COV_TOTAL = re.compile(r"(?im)^\s*TOTAL\b.*?(\d+(?:\.\d+)?)\s*%\s*$")
+COV_LABEL = re.compile(
+    r"(?im)^\s*(?:coverage|total coverage|line coverage)\s*[:=]\s*"
+    r"(\d+(?:\.\d+)?)\s*%\s*$"
+)
+ASSERTION = re.compile(
+    r"\b(assert|expect\(|should|toBe\(|toEqual\(|toStrictEqual\(|raises\(|"
+    r"pytest\.raises|assertThat|XCTAssert|require\.|verify\()",
+    re.I,
+)
+WEAK_ASSERTION = re.compile(
+    r"\b(assert\s+true|expect\(\s*true\s*\)|assert\.ok\(\s*true\s*\)|"
+    r"assertTrue\(\s*true\s*\)|XCTAssertTrue\(\s*true\s*\))",
+    re.I,
+)
+TDD_RED = re.compile(r"\b(red|failing test|fail(?:ing)? first|test first)\b", re.I)
+TDD_GREEN = re.compile(r"\b(green|pass(?:ing)? test|implement|implementation)\b", re.I)
+
+
+def arg(flag, default=None):
+    return sys.argv[sys.argv.index(flag) + 1] if flag in sys.argv else default
+
+
+def ids(path, pat):
+    p = Path(path)
+    if not p.exists():
+        return set()
+    return {m.group(0) for m in pat.finditer(p.read_text(encoding="utf-8"))}
+
+
+def source_files(root: Path, suffixes: set[str]):
+    skipped = {
+        ".git",
+        ".hg",
+        ".svn",
+        "node_modules",
+        ".venv",
+        "venv",
+        "__pycache__",
+        "dist",
+        "build",
+    }
+    for f in root.rglob("*"):
+        if any(part in skipped for part in f.parts):
+            continue
+        if f.is_file() and f.suffix in suffixes:
+            yield f
+
+
+def extract_coverage(text: str) -> float | None:
+    """Extract coverage from labeled output, ignoring unrelated percent text."""
+    for pattern in (COV_TOTAL, COV_LABEL):
+        hits = pattern.findall(text)
+        if hits:
+            return float(hits[-1])
+    return None
+
+
+def test_command() -> tuple[list[str] | str | None, bool]:
+    """Return a safe argv command by default; shell execution requires opt-in."""
+    argv_json = arg("--tests-argv")
+    if argv_json:
+        parsed = json.loads(argv_json)
+        if not isinstance(parsed, list) or not all(isinstance(x, str) for x in parsed):
+            raise ValueError("--tests-argv must be a JSON array of strings")
+        return parsed, False
+    cmd = arg("--tests")
+    if not cmd:
+        return None, False
+    if "--tests-shell" in sys.argv:
+        return cmd, True
+    return shlex.split(cmd, posix=os.name != "nt"), False
+
+
+def assertion_linked_ids(test_text: str, wanted: set[str]) -> set[str]:
+    """IDs whose nearby test block has a non-trivial assertion-like statement."""
+    lines = test_text.splitlines()
+    linked: set[str] = set()
+    for idx, line in enumerate(lines):
+        ids_here = {
+            item for item in wanted if item in line or item.replace("-", "_") in line
+        }
+        if not ids_here:
+            continue
+        window = "\n".join(lines[idx : min(len(lines), idx + 18)])
+        has_assertion = ASSERTION.search(window) and not WEAK_ASSERTION.search(window)
+        if has_assertion:
+            linked.update(ids_here)
+    return linked
+
+
+def git_output(args: list[str], cwd: Path) -> tuple[int, str]:
+    result = subprocess.run(args, cwd=cwd, capture_output=True, text=True, check=False)
+    return result.returncode, result.stdout.strip()
+
+
+def git_diff_loc(root: Path, base: str | None) -> tuple[int | None, str]:
+    rc, _ = git_output(["git", "rev-parse", "--is-inside-work-tree"], root)
+    if rc != 0:
+        return None, "not_git_repo"
+    if base:
+        diff_args = ["git", "diff", "--numstat", base, "--"]
+        evidence = f"git_diff_{base}"
+    else:
+        rc, _ = git_output(["git", "rev-parse", "--verify", "HEAD"], root)
+        if rc != 0:
+            return None, "no_head"
+        diff_args = ["git", "diff", "--numstat", "HEAD", "--"]
+        evidence = "git_diff_HEAD"
+    rc, out = git_output(diff_args, root)
+    if rc != 0:
+        return None, "diff_failed"
+    total = 0
+    for line in out.splitlines():
+        added, deleted, *_ = line.split("\t")
+        if added == "-" or deleted == "-":
+            continue
+        total += int(added) + int(deleted)
+    return total, evidence
+
+
+def git_tdd_evidence(root: Path, base: str | None) -> dict[str, object]:
+    rc, _ = git_output(["git", "rev-parse", "--is-inside-work-tree"], root)
+    if rc != 0:
+        return {"available": False, "reason": "not_git_repo"}
+    if base:
+        rev_range = f"{base}..HEAD"
+    else:
+        rc, _ = git_output(["git", "rev-parse", "--verify", "HEAD"], root)
+        if rc != 0:
+            return {"available": False, "reason": "no_head"}
+        rev_range = "HEAD"
+    rc, log = git_output(["git", "log", "--format=%s%n%b", rev_range], root)
+    if rc != 0:
+        return {"available": False, "reason": "log_failed"}
+    return {
+        "available": True,
+        "red_marker": bool(TDD_RED.search(log)),
+        "green_marker": bool(TDD_GREEN.search(log)),
+    }
+
+
+def main() -> int:
+    as_json = "--json" in sys.argv
+    plan = arg("--plan", "plan.md")
+    tests_dir = Path(arg("--tests-dir", "tests"))
+    src = Path(arg("--src", "."))
+    cov_min = float(arg("--cov-min", "80"))
+    max_loc = int(arg("--max-loc", "600"))
+    max_diff_loc = int(arg("--max-diff-loc", "300"))
+    diff_base = arg("--diff-base")
+    require_git = "--require-git-evidence" in sys.argv
+    require_tdd = "--require-tdd-evidence" in sys.argv
+    src_ext = {
+        e.strip()
+        for e in arg("--src-ext", ".py,.ts,.tsx,.js,.jsx").split(",")
+        if e.strip()
+    }
+    cmd, use_shell = test_command()
+
+    test_text = ""
+    if tests_dir.exists():
+        for f in tests_dir.rglob("*.*"):
+            if f.suffix in (".py", ".ts", ".js", ".tsx", ".jsx"):
+                test_text += f.read_text(encoding="utf-8", errors="ignore") + "\n"
+
+    plan_prs = ids(plan, PR)
+    seen_prs = {
+        p for p in plan_prs if p.replace("-", "_") in test_text or p in test_text
+    }
+    want = ids(arg("--spec", "spec.md"), ID) | ids(arg("--design", "design.md"), ID)
+    seen = {i for i in want if i in test_text or i.replace("-", "_") in test_text}
+    assertion_seen = assertion_linked_ids(test_text, want)
+
+    oversized = sorted(
+        str(f)
+        for f in source_files(src, src_ext)
+        if f.is_file()
+        and len(f.read_text(encoding="utf-8", errors="ignore").splitlines()) > max_loc
+    )
+    vague = VAGUE.findall(test_text) + SKIP.findall(test_text)
+
+    tests_pass, cov = None, None
+    if cmd:
+        r = subprocess.run(cmd, shell=use_shell, capture_output=True, text=True)
+        tests_pass = r.returncode == 0
+        cov = extract_coverage(r.stdout + r.stderr)
+
+    cwd = Path.cwd()
+    diff_loc, diff_evidence = git_diff_loc(cwd, diff_base)
+    tdd_evidence = git_tdd_evidence(cwd, diff_base)
+    diff_ok = diff_loc is not None and diff_loc <= max_diff_loc
+    oversized_diff = diff_loc is not None and diff_loc > max_diff_loc
+    tdd_ok = bool(tdd_evidence.get("red_marker")) and bool(
+        tdd_evidence.get("green_marker")
+    )
+
+    pr_pct = round(100 * len(seen_prs) / len(plan_prs), 1) if plan_prs else 100.0
+    id_pct = round(100 * len(seen) / len(want), 1) if want else 100.0
+    assertion_id_pct = (
+        round(100 * len(assertion_seen) / len(want), 1) if want else 100.0
+    )
+    gates = {
+        "tests_pass": bool(tests_pass),
+        "coverage_ok": cov is not None and cov >= cov_min,
+        "pr_traceability_100": seen_prs == plan_prs,
+        "id_traceability_100": seen == want,
+        "id_assertion_traceability_100": assertion_seen == want,
+        "no_oversized_modules": not oversized,
+        "diff_size_ok": diff_ok if require_git else diff_loc is None or diff_ok,
+        "tdd_evidence_ok": tdd_ok if require_tdd else True,
+        "no_vagueness": len(vague) == 0,
+    }
+    report = {
+        "tests_pass": gates["tests_pass"],
+        "coverage_pct": cov,
+        "cov_min": cov_min,
+        "pr_traceability_pct": pr_pct,
+        "id_traceability_pct": id_pct,
+        "id_assertion_traceability_pct": assertion_id_pct,
+        "uncovered_prs": sorted(plan_prs - seen_prs),
+        "uncovered_ids": sorted(want - seen),
+        "ids_without_nearby_assertion": sorted(want - assertion_seen),
+        "oversized_modules": oversized,
+        "diff_loc": diff_loc,
+        "max_diff_loc": max_diff_loc,
+        "diff_evidence": diff_evidence,
+        "oversized_diff": oversized_diff,
+        "tdd_evidence": tdd_evidence,
+        "vague_hits": len(vague),
+        "gates": gates,
+        "passed": sum(gates.values()),
+        "total": len(gates),
+    }
+    if as_json:
+        print(json.dumps(report, indent=2))
+    else:
+        for k, v in gates.items():
+            print(f"{'PASS' if v else 'FAIL'}  {k}")
+        print(f"\nPR {pr_pct}%  ID {id_pct}%  cov {cov}")
+        print(f"{report['passed']}/{report['total']} gates passed")
+    return 0 if all(gates.values()) else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

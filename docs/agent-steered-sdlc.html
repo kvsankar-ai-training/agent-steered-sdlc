@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agent-Steered SDLC Tree</title>
+  <style>
+    :root {
+      --bg: #eef2f6;
+      --card: #ffffff;
+      --ink: #17202a;
+      --muted: #617080;
+      --line: #d7dee8;
+      --blue: #2457a6;
+      --amber: #a46800;
+      --green: #1d7a58;
+      --violet: #6650a4;
+      --red: #a63d40;
+      --soft-blue: #f1f6fd;
+      --soft-amber: #fff7e8;
+      --soft-green: #eef8f3;
+      --soft-violet: #f5f2ff;
+      --soft-red: #fff1f1;
+      --shadow: 0 12px 28px rgba(23, 32, 42, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+      line-height: 1.45;
+    }
+
+    main {
+      width: calc(100% - 28px);
+      margin: 0 auto;
+      padding: 24px 0 36px;
+    }
+
+    header,
+    section {
+      margin-top: 14px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+
+    h1,
+    h2,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 4vw, 3.1rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+      font-size: 1.2rem;
+    }
+
+    p {
+      color: var(--muted);
+    }
+
+    code {
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: #eaf0f7;
+      color: #1f3854;
+      font-family: "Cascadia Code", Consolas, monospace;
+      font-size: 0.92em;
+    }
+
+    .lede {
+      max-width: 920px;
+      margin-top: 8px;
+      font-size: 1.04rem;
+    }
+
+    .prompt {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border: 1px solid #b9c9de;
+      border-left: 5px solid var(--blue);
+      border-radius: 8px;
+      background: var(--soft-blue);
+      color: #27394d;
+      font-weight: 700;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 3px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #f7f9fc;
+      color: #334252;
+      font-size: 0.88rem;
+      font-weight: 800;
+    }
+
+    .tree-wrap {
+      overflow-x: hidden;
+      padding: 8px 0 2px;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .node rect {
+      stroke-width: 1.5;
+      rx: 8;
+      ry: 8;
+    }
+
+    .node text {
+      fill: var(--ink);
+      font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+      letter-spacing: 0;
+    }
+
+    .node .title {
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .node .sub {
+      fill: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .product rect {
+      fill: var(--soft-blue);
+      stroke: #93afd5;
+    }
+
+    .feature rect {
+      fill: var(--soft-amber);
+      stroke: #d2a756;
+    }
+
+    .slice rect {
+      fill: var(--soft-green);
+      stroke: #8fc2aa;
+    }
+
+    .impl rect {
+      fill: var(--soft-violet);
+      stroke: #b8aee2;
+    }
+
+    .blocker rect {
+      fill: var(--soft-red);
+      stroke: #daa0a0;
+    }
+
+    .edge {
+      fill: none;
+      stroke: #778394;
+      stroke-width: 1.8;
+      marker-end: url(#arrow);
+    }
+
+    .edge-label rect {
+      fill: #ffffff;
+      stroke: #cbd5e1;
+      rx: 9;
+      ry: 9;
+    }
+
+    .edge-label text {
+      fill: var(--blue);
+      font-family: "Cascadia Code", Consolas, monospace;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .col-label {
+      fill: #485565;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .note {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .note-card {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+
+    .note-card strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--ink);
+    }
+
+    .matrix {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin-top: 12px;
+      overflow-wrap: anywhere;
+      font-size: 0.92rem;
+    }
+
+    .matrix th,
+    .matrix td {
+      vertical-align: top;
+      padding: 10px;
+      border: 1px solid var(--line);
+      text-align: left;
+    }
+
+    .matrix th {
+      background: #f1f5f9;
+      color: #334252;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+    }
+
+    .matrix td {
+      color: var(--muted);
+    }
+
+    .matrix .scope {
+      color: var(--ink);
+      font-weight: 800;
+    }
+
+    @media (max-width: 760px) {
+      main {
+        width: min(100% - 18px, 1280px);
+        padding-top: 12px;
+      }
+
+      header,
+      section {
+        padding: 14px;
+      }
+
+      .note {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Agent-Steered SDLC: One Tree</h1>
+      <p class="lede">
+        Example product: a Facebook-style social app. Follow the arrows: each edge names the
+        command that turns one artifact into the next.
+      </p>
+      <div class="prompt">
+        Prompt: "Build a social app where users can create profiles, post updates, react,
+        comment, and see a personalized feed."
+      </div>
+      <div class="legend" aria-label="Legend">
+        <span class="pill">Blue = Product/System</span>
+        <span class="pill">Amber = Feature/Component</span>
+        <span class="pill">Green = Slice/Change</span>
+        <span class="pill">Purple = PR + code + tests</span>
+      </div>
+    </header>
+
+    <section>
+      <h2>Example Artifact Tree</h2>
+      <div class="tree-wrap" role="img" aria-label="Left to right SDLC artifact tree">
+        <svg viewBox="0 0 1610 760" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#778394"/>
+            </marker>
+          </defs>
+
+          <text x="40" y="26" class="col-label">Request</text>
+          <text x="320" y="26" class="col-label">Product/System</text>
+          <text x="640" y="26" class="col-label">Feature/Component</text>
+          <text x="990" y="26" class="col-label">Slice/Change</text>
+          <text x="1320" y="26" class="col-label">Implementation</text>
+
+          <g class="node product" transform="translate(40 68)">
+            <rect width="170" height="92"/>
+            <text x="14" y="28" class="title">Product ask</text>
+            <text x="14" y="52" class="sub">Facebook clone</text>
+            <text x="14" y="72" class="sub">social app MVP</text>
+          </g>
+
+          <g class="node product" transform="translate(320 52)">
+            <rect width="210" height="122"/>
+            <text x="14" y="28" class="title">Product spec</text>
+            <text x="14" y="52" class="sub">spec.md</text>
+            <text x="14" y="72" class="sub">needs, non-goals, NFRs</text>
+            <text x="14" y="92" class="sub">Readiness: decomposable</text>
+          </g>
+
+          <g class="node product" transform="translate(320 230)">
+            <rect width="210" height="122"/>
+            <text x="14" y="28" class="title">System HLD</text>
+            <text x="14" y="52" class="sub">design.md + ADRs</text>
+            <text x="14" y="72" class="sub">web, API, feed service</text>
+            <text x="14" y="92" class="sub">Readiness: decomposable</text>
+          </g>
+
+          <g class="node product" transform="translate(320 408)">
+            <rect width="210" height="122"/>
+            <text x="14" y="28" class="title">Breakdown plan</text>
+            <text x="14" y="52" class="sub">plan.md</text>
+            <text x="14" y="72" class="sub">WORK-PROFILE / POST</text>
+            <text x="14" y="92" class="sub">WORK-FEED</text>
+          </g>
+
+          <g class="node feature" transform="translate(640 90)">
+            <rect width="220" height="112"/>
+            <text x="14" y="28" class="title">Profile feature</text>
+            <text x="14" y="52" class="sub">feature spec + design</text>
+            <text x="14" y="72" class="sub">identity, privacy, edit flow</text>
+            <text x="14" y="92" class="sub">Readiness: decomposable</text>
+          </g>
+
+          <g class="node feature" transform="translate(640 280)">
+            <rect width="220" height="112"/>
+            <text x="14" y="28" class="title">Posting component</text>
+            <text x="14" y="52" class="sub">feature spec + design</text>
+            <text x="14" y="72" class="sub">posts, reactions, comments</text>
+            <text x="14" y="92" class="sub">Readiness: decomposable</text>
+          </g>
+
+          <g class="node feature" transform="translate(640 470)">
+            <rect width="220" height="112"/>
+            <text x="14" y="28" class="title">Feed feature</text>
+            <text x="14" y="52" class="sub">feature spec + HLD/LLD</text>
+            <text x="14" y="72" class="sub">ranking, pagination, cache</text>
+            <text x="14" y="92" class="sub">Readiness: decomposable</text>
+          </g>
+
+          <g class="node slice" transform="translate(990 42)">
+            <rect width="230" height="96"/>
+            <text x="14" y="27" class="title">Edit profile slice</text>
+            <text x="14" y="50" class="sub">slice spec + LLD</text>
+            <text x="14" y="70" class="sub">Readiness: code-ready</text>
+          </g>
+
+          <g class="node slice" transform="translate(990 158)">
+            <rect width="230" height="96"/>
+            <text x="14" y="27" class="title">Privacy settings slice</text>
+            <text x="14" y="50" class="sub">slice spec + LLD</text>
+            <text x="14" y="70" class="sub">Readiness: code-ready</text>
+          </g>
+
+          <g class="node slice" transform="translate(990 274)">
+            <rect width="230" height="96"/>
+            <text x="14" y="27" class="title">Create post slice</text>
+            <text x="14" y="50" class="sub">slice spec + LLD</text>
+            <text x="14" y="70" class="sub">Readiness: code-ready</text>
+          </g>
+
+          <g class="node slice" transform="translate(990 390)">
+            <rect width="230" height="96"/>
+            <text x="14" y="27" class="title">Comment/reaction slice</text>
+            <text x="14" y="50" class="sub">slice spec + LLD</text>
+            <text x="14" y="70" class="sub">Readiness: code-ready</text>
+          </g>
+
+          <g class="node slice" transform="translate(990 506)">
+            <rect width="230" height="96"/>
+            <text x="14" y="27" class="title">Ranked feed slice</text>
+            <text x="14" y="50" class="sub">slice spec + LLD</text>
+            <text x="14" y="70" class="sub">Readiness: code-ready</text>
+          </g>
+
+          <g class="node slice" transform="translate(990 622)">
+            <rect width="230" height="96"/>
+            <text x="14" y="27" class="title">Infinite scroll slice</text>
+            <text x="14" y="50" class="sub">slice spec + LLD</text>
+            <text x="14" y="70" class="sub">Readiness: code-ready</text>
+          </g>
+
+          <g class="node impl" transform="translate(1320 42)">
+            <rect width="250" height="96"/>
+            <text x="14" y="27" class="title">PR-PROFILE-10/20</text>
+            <text x="14" y="50" class="sub">unit, contract, UI tests</text>
+            <text x="14" y="70" class="sub">code + /code-review</text>
+          </g>
+
+          <g class="node impl" transform="translate(1320 158)">
+            <rect width="250" height="96"/>
+            <text x="14" y="27" class="title">PR-PRIVACY-10</text>
+            <text x="14" y="50" class="sub">auth + acceptance tests</text>
+            <text x="14" y="70" class="sub">code + /code-review</text>
+          </g>
+
+          <g class="node impl" transform="translate(1320 274)">
+            <rect width="250" height="96"/>
+            <text x="14" y="27" class="title">PR-POST-10/20</text>
+            <text x="14" y="50" class="sub">API, DB, UI tests</text>
+            <text x="14" y="70" class="sub">code + /code-review</text>
+          </g>
+
+          <g class="node impl" transform="translate(1320 390)">
+            <rect width="250" height="96"/>
+            <text x="14" y="27" class="title">PR-SOCIAL-10/20</text>
+            <text x="14" y="50" class="sub">contract + integration tests</text>
+            <text x="14" y="70" class="sub">code + /code-review</text>
+          </g>
+
+          <g class="node impl" transform="translate(1320 506)">
+            <rect width="250" height="96"/>
+            <text x="14" y="27" class="title">PR-FEED-10/20</text>
+            <text x="14" y="50" class="sub">ranking + perf tests</text>
+            <text x="14" y="70" class="sub">code + /code-review</text>
+          </g>
+
+          <g class="node impl" transform="translate(1320 622)">
+            <rect width="250" height="96"/>
+            <text x="14" y="27" class="title">PR-SCROLL-10</text>
+            <text x="14" y="50" class="sub">e2e + accessibility tests</text>
+            <text x="14" y="70" class="sub">code + /code-review</text>
+          </g>
+
+          <path class="edge" d="M210 114 C250 114 280 113 320 113"/>
+          <g class="edge-label" transform="translate(222 86)">
+            <rect width="96" height="22"/>
+            <text x="10" y="15">/spec-create</text>
+          </g>
+
+          <path class="edge" d="M425 174 C425 197 425 207 425 230"/>
+          <g class="edge-label" transform="translate(438 193)">
+            <rect width="98" height="22"/>
+            <text x="10" y="15">/design-create</text>
+          </g>
+
+          <path class="edge" d="M425 352 C425 375 425 385 425 408"/>
+          <g class="edge-label" transform="translate(438 371)">
+            <rect width="88" height="22"/>
+            <text x="10" y="15">/plan-create</text>
+          </g>
+
+          <path class="edge" d="M530 464 C578 464 592 146 640 146"/>
+          <path class="edge" d="M530 469 C585 469 590 336 640 336"/>
+          <path class="edge" d="M530 474 C578 474 592 526 640 526"/>
+          <g class="edge-label" transform="translate(532 418)">
+            <rect width="104" height="22"/>
+            <text x="10" y="15">/spec/design</text>
+          </g>
+
+          <path class="edge" d="M860 146 C910 146 940 90 990 90"/>
+          <path class="edge" d="M860 146 C910 146 940 206 990 206"/>
+          <path class="edge" d="M860 336 C910 336 940 322 990 322"/>
+          <path class="edge" d="M860 336 C910 336 940 438 990 438"/>
+          <path class="edge" d="M860 526 C910 526 940 554 990 554"/>
+          <path class="edge" d="M860 526 C910 526 940 670 990 670"/>
+          <g class="edge-label" transform="translate(884 306)">
+            <rect width="96" height="22"/>
+            <text x="10" y="15">/plan-create</text>
+          </g>
+
+          <path class="edge" d="M1220 90 C1255 90 1285 90 1320 90"/>
+          <path class="edge" d="M1220 206 C1255 206 1285 206 1320 206"/>
+          <path class="edge" d="M1220 322 C1255 322 1285 322 1320 322"/>
+          <path class="edge" d="M1220 438 C1255 438 1285 438 1320 438"/>
+          <path class="edge" d="M1220 554 C1255 554 1285 554 1320 554"/>
+          <path class="edge" d="M1220 670 C1255 670 1285 670 1320 670"/>
+          <g class="edge-label" transform="translate(1226 341)">
+            <rect width="88" height="22"/>
+            <text x="10" y="15">/code-create</text>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <section>
+      <h2>How to read the tree</h2>
+      <div class="note">
+        <div class="note-card">
+          <strong>Three levels are visible.</strong>
+          <p>Product/system artifacts decompose into feature/component artifacts, which decompose into slice/change artifacts.</p>
+        </div>
+        <div class="note-card">
+          <strong>Readiness changes by level.</strong>
+          <p>Product and feature artifacts can be valid while decomposable. Slice artifacts should become code-ready.</p>
+        </div>
+        <div class="note-card">
+          <strong>Tests land at the right place.</strong>
+          <p><code>AT-</code> criteria start in specs. Executable unit, contract, integration, UI, e2e, and performance tests arrive with PRs.</p>
+        </div>
+        <div class="note-card">
+          <strong>Spikes stay lightweight.</strong>
+          <p>Exploratory prototypes use a timeboxed note with evidence and disposal criteria, not production-ready artifacts.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>What each level carries</h2>
+      <table class="matrix">
+        <thead>
+          <tr>
+            <th>Scope</th>
+            <th>Spec</th>
+            <th>Design</th>
+            <th>Plan</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="scope">Product/System</td>
+            <td>Mission, stakeholders, boundary, needs, non-goals, capabilities, major NFRs, broad ATs.</td>
+            <td>HLD: context, major services/modules, drivers, boundaries, data ownership, ADRs, risks.</td>
+            <td>Breakdown: milestones, feature/component work, dependencies, child artifacts, parallel tracks.</td>
+          </tr>
+          <tr>
+            <td class="scope">Feature/Component</td>
+            <td>Parent refs, local behavior, FR/NFR/ATs, edge cases, rules, dependencies, non-goals.</td>
+            <td>Responsibilities, contracts, local state/flows, core/shell split, decisions, test matrix.</td>
+            <td>Child slices or PRs, integration order, test allocation, touch-scope risks.</td>
+          </tr>
+          <tr>
+            <td class="scope">Slice/Change</td>
+            <td>Exact requirement delta, refined parent IDs, changed/unchanged behavior, code-ready ATs.</td>
+            <td>LLD: local changes, API/schema/data deltas, failure paths, migration/rollback, test levels.</td>
+            <td>Implementation PRs, Planned Touch Sets, Red/Green steps, LOC, quality gates, worktrees.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>

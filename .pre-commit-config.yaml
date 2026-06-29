@@ -1,0 +1,26 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: uv run ruff check
+        language: system
+        types_or: [python, pyi]
+
+      - id: ruff-format
+        name: ruff format check
+        entry: uv run ruff format --check
+        language: system
+        types_or: [python, pyi]
+
+      - id: pymarkdown-scan
+        name: pymarkdown scan
+        entry: uv run pymarkdown --enable-extensions front-matter,markdown-tables -d md013 scan
+        language: system
+        types: [markdown]
+
+      - id: pytest-checkers
+        name: pytest checkers
+        entry: uv run pytest -q --cov=checkers --cov-report=term-missing --cov-fail-under=80
+        language: system
+        pass_filenames: false
