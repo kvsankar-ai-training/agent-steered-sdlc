@@ -369,11 +369,16 @@ Install targets:
   skills, but this installer writes both so commands are directly accessible.
 - GitHub Copilot: user scope installs VS Code user prompt files under
   `%APPDATA%\Code\User\prompts` on Windows, `~/Library/Application Support/Code/User/prompts`
-  on macOS, or `${XDG_CONFIG_HOME:-~/.config}/Code/User/prompts` on Linux. Project scope
-  installs `<target>/.github/prompts/*.prompt.md`. Set `AGENT_SDLC_COPILOT_PROMPTS_DIR` to
+  on macOS, or `${XDG_CONFIG_HOME:-~/.config}/Code/User/prompts` on Linux. It also installs
+  the `agent-steered-sdlc` skill under `~/.copilot/skills/agent-steered-sdlc` and
+  `~/.agents/skills/agent-steered-sdlc` for Copilot CLI/agent skill loading. Project scope
+  installs prompts to `<target>/.github/prompts/*.prompt.md` and skills to
+  `<target>/.github/skills/agent-steered-sdlc` plus
+  `<target>/.agents/skills/agent-steered-sdlc`. Set `AGENT_SDLC_COPILOT_PROMPTS_DIR` to
   override the user prompt folder for another VS Code profile or distribution. Copilot
   prompt exports are written with `mode: agent` and no `tools:` allowlist, so they are direct
-  slash prompts without restricting tool availability.
+  slash prompts without restricting tool availability. After skill install, restart Copilot
+  CLI or run `/skills reload`, then verify with `/skills info agent-steered-sdlc`.
 - Claude Code: `<target>/.claude/commands/*.md` or `~/.claude/commands/*.md`, plus
   the `agent-steered-sdlc` skill under `<target>/.claude/skills/` or `~/.claude/skills/`.
 - Gemini CLI: `<target>/.gemini/commands/*.toml` or `~/.gemini/commands/*.toml`.

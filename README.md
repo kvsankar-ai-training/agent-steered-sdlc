@@ -75,8 +75,12 @@ also refresh Windows targets when `powershell.exe` is available. Use `-NoCrossIn
 - **Codex**: installs the `agent-steered-sdlc` skill and direct prompt commands under
   `~/.codex/prompts`. Invoke direct prompts as `/prompts:spec-create`,
   `/prompts:design-create`, etc. after restarting Codex.
-- **GitHub Copilot in VS Code**: user scope installs prompt files under the VS Code user
-  prompt folder. Project scope installs to `<project>/.github/prompts`.
+- **GitHub Copilot**: installs prompt files for VS Code Copilot Chat and first-class agent
+  skills for Copilot CLI/agent surfaces. User scope installs prompts under the VS Code user
+  prompt folder and skills under `~/.copilot/skills/agent-steered-sdlc` plus
+  `~/.agents/skills/agent-steered-sdlc`. Project scope installs prompts to
+  `<project>/.github/prompts` and skills to `<project>/.github/skills/agent-steered-sdlc`
+  plus `<project>/.agents/skills/agent-steered-sdlc`.
 - **Claude Code**: installs slash commands and the skill.
 - **Gemini CLI**: installs command TOML files.
 - **Claude and Pi**: exports prompt packs under `.ai-prompts/` for manual import or use.

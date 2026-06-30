@@ -118,6 +118,19 @@ function Get-CopilotPromptDestination {
     return Join-Path $HOME ".config/Code/User/prompts"
 }
 
+function Get-CopilotSkillDestinations {
+    if ($Scope -eq "user") {
+        return @(
+            Join-Path $HOME ".copilot/skills/agent-steered-sdlc"
+            Join-Path $HOME ".agents/skills/agent-steered-sdlc"
+        )
+    }
+    return @(
+        Join-Path $TargetRoot ".github/skills/agent-steered-sdlc"
+        Join-Path $TargetRoot ".agents/skills/agent-steered-sdlc"
+    )
+}
+
 function Write-DestinationSummary {
     param([string[]]$Entries)
     Write-Host "Destination folders:"
@@ -134,9 +147,13 @@ function Write-DestinationSummary {
             }
             "copilot" {
                 Write-Host "  GitHub Copilot prompts -> $(Get-CopilotPromptDestination)"
-                if ($Scope -eq "user") {
-                    Write-Host "    User-scoped VS Code prompt files; invoke from Copilot Chat after restarting VS Code."
+                foreach ($skillDest in Get-CopilotSkillDestinations) {
+                    Write-Host "  GitHub Copilot skill -> $skillDest"
                 }
+                if ($Scope -eq "user") {
+                    Write-Host "    User-scoped VS Code prompt files plus Copilot CLI/agent skill locations."
+                }
+                Write-Host "    Reload Copilot CLI skills with /skills reload, then check /skills info agent-steered-sdlc."
             }
             "claude-code" {
                 if ($Scope -eq "user") {
@@ -215,8 +232,12 @@ function Copy-SkillFolder {
 
 function Install-Copilot {
     $dest = Get-CopilotPromptDestination
+    $skillDests = Get-CopilotSkillDestinations
     if ($DryRun) {
         Write-Host "Would install GitHub Copilot prompts -> $dest"
+        foreach ($skillDest in $skillDests) {
+            Write-Host "Would install GitHub Copilot skill -> $skillDest"
+        }
         return
     }
     New-Item -ItemType Directory -Force -Path $dest | Out-Null
@@ -225,7 +246,12 @@ function Install-Copilot {
         Set-Content -LiteralPath (Join-Path $dest $_.Name) -Value $body -NoNewline
     }
     Write-Host "Installed GitHub Copilot prompts -> $dest"
+    foreach ($skillDest in $skillDests) {
+        Copy-SkillFolder $skillDest
+        Write-Host "Installed GitHub Copilot skill -> $skillDest"
+    }
     Write-Host "Copilot prompts are written in agent mode without a tools allowlist; restart VS Code to reload them."
+    Write-Host "Copilot CLI can load the skill after a new session or /skills reload; check with /skills info agent-steered-sdlc."
 }
 
 function Install-Codex {

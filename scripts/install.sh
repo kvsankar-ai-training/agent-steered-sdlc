@@ -38,7 +38,9 @@ Options:
 
 Notes:
   - GitHub Copilot prompts install to the VS Code user prompts folder by default,
-    or to <target>/.github/prompts with --scope project.
+    or to <target>/.github/prompts with --scope project. Copilot skills install
+    to ~/.copilot/skills and ~/.agents/skills by default, or to <target>/.github/skills
+    and <target>/.agents/skills with --scope project.
   - Codex skills install to <target>/.codex/skills or ~/.codex/skills.
   - Codex direct prompts install to <target>/.codex/prompts or ~/.codex/prompts
     and are invoked as /prompts:<name> after restarting Codex.
@@ -190,6 +192,16 @@ copilot_prompt_dest() {
   esac
 }
 
+copilot_skill_dests() {
+  if [[ "$SCOPE" == "user" ]]; then
+    printf '%s\n' "$HOME/.copilot/skills/agent-steered-sdlc"
+    printf '%s\n' "$HOME/.agents/skills/agent-steered-sdlc"
+  else
+    printf '%s\n' "$TARGET_ROOT/.github/skills/agent-steered-sdlc"
+    printf '%s\n' "$TARGET_ROOT/.agents/skills/agent-steered-sdlc"
+  fi
+}
+
 copy_codex_prompt_files() {
   local dest="$1"
   mkdir -p "$dest"
@@ -212,9 +224,13 @@ write_destination_summary() {
         ;;
       copilot)
         echo "  GitHub Copilot prompts -> $(copilot_prompt_dest)"
+        while IFS= read -r skill_dest; do
+          echo "  GitHub Copilot skill -> $skill_dest"
+        done < <(copilot_skill_dests)
         if [[ "$SCOPE" == "user" ]]; then
-          echo "    User-scoped VS Code prompt files; invoke from Copilot Chat after restarting VS Code."
+          echo "    User-scoped VS Code prompt files plus Copilot CLI/agent skill locations."
         fi
+        echo "    Reload Copilot CLI skills with /skills reload, then check /skills info agent-steered-sdlc."
         ;;
       claude-code)
         if [[ "$SCOPE" == "user" ]]; then
@@ -292,10 +308,13 @@ copy_skill_folder() {
 }
 
 install_copilot() {
-  local dest
+  local dest skill_dest
   dest="$(copilot_prompt_dest)"
   if [[ "$DRY_RUN" -eq 1 ]]; then
     echo "Would install GitHub Copilot prompts -> $dest"
+    while IFS= read -r skill_dest; do
+      echo "Would install GitHub Copilot skill -> $skill_dest"
+    done < <(copilot_skill_dests)
     return
   fi
   mkdir -p "$dest"
@@ -303,7 +322,12 @@ install_copilot() {
     copilot_prompt_body "$file" > "$dest/$(basename "$file")"
   done
   echo "Installed GitHub Copilot prompts -> $dest"
+  while IFS= read -r skill_dest; do
+    copy_skill_folder "$skill_dest"
+    echo "Installed GitHub Copilot skill -> $skill_dest"
+  done < <(copilot_skill_dests)
   echo "Copilot prompts are written in agent mode without a tools allowlist; restart VS Code to reload them."
+  echo "Copilot CLI can load the skill after a new session or /skills reload; check with /skills info agent-steered-sdlc."
 }
 
 install_codex() {
