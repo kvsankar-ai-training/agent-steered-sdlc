@@ -561,3 +561,19 @@ Pass-with-fixes.
 
 Write the design to `design.md` (source of truth) and a matching `design.html` companion
 in the workspace unless the user names other files.
+
+## Human review gate (hard stop)
+
+After writing or revising the design and completing the checker/review loop above, **stop**.
+Do not start `/plan-create`, `/code-create`, or any downstream artifact in the same turn.
+
+End with a human-review handoff that includes:
+
+- Design path(s), including ADR paths if created or updated.
+- Work Scope, Design Depth, and Implementation Readiness.
+- Checker/review result.
+- Key decisions, assumptions, open questions, and risks.
+- Recommended next command, normally `/plan-create` only after the user approves the design.
+
+Continue past this gate only if the user's latest message explicitly requested unattended
+end-to-end continuation or explicitly approves the next stage.

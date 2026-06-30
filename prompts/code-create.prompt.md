@@ -270,8 +270,22 @@ upstream artifacts if the review says they must change; otherwise revise tests/c
 checker + review until `/code-review` would return Pass or an explicitly accepted
 Pass-with-fixes for that boundary.
 
-Then move to the next PR. Stop when every plan PR is built, green, checker-clean, and
-review-clean.
+## Step 6 — Human review gate (hard stop)
+
+After completing one PR/code slice and its checker/review loop, **stop**. Do not move to the
+next PR, perform release/deployment work, or continue downstream in the same turn unless the
+user's latest message explicitly requested unattended continuation across PRs.
+
+End with a human-review handoff that includes:
+
+- Completed PR/code slice ID and touched files.
+- Test, checker, pre-commit/local gate, build/deploy, and documentation results.
+- Any assumptions, limitations, skipped checks, or follow-up risks.
+- Recommended next command or next PR ID only after the user approves this slice.
+
+If the user explicitly requested unattended implementation across all PRs, continue in plan
+order and still produce a clear boundary report after each PR. Otherwise, stop after the
+first completed PR boundary.
 
 ## Quality rules
 

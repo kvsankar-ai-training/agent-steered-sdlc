@@ -295,3 +295,20 @@ Pass-with-fixes.
 
 Write the plan to `plan.md` (source of truth) and a matching `plan.html` companion in the
 workspace unless the user names other files.
+
+## Human review gate (hard stop)
+
+After writing or revising the plan and completing the checker/review loop above, **stop**.
+Do not start `/code-create`, implementation, build/deployment work, or any downstream
+artifact in the same turn.
+
+End with a human-review handoff that includes:
+
+- Plan path(s).
+- Work Scope, Plan Type, and Implementation Readiness.
+- Checker/review result.
+- PR/work-item count, parallel waves, and known risks.
+- Recommended next command, normally `/code-create` only after the user approves the plan.
+
+Continue past this gate only if the user's latest message explicitly requested unattended
+end-to-end continuation or explicitly approves the next stage.

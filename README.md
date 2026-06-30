@@ -168,8 +168,14 @@ that should own it.
 Default behavior is human-gated:
 
 - If important input is missing, the agent asks one focused question at a time.
-- After an artifact is generated or materially revised, the agent stops for human review.
+- After an artifact is generated, materially revised, or reviewed, the agent stops for human review.
 - Downstream reviews stop when they discover upstream spec, design, or plan issues.
+
+The human review pause is a hard gate. A completed spec does not automatically flow into
+design; a completed design does not automatically flow into planning; a completed plan does
+not automatically flow into code; and a completed code slice does not automatically flow into
+the next slice or release/deployment work. The agent should end its turn with artifact paths,
+readiness/status, check or review results, open questions, and the recommended next command.
 
 You can opt into **YOLO mode** with phrases like:
 

@@ -162,3 +162,10 @@ Otherwise:
 2. Qualitative scorecard (1–5 + fixes, including Planned Touch Set adequacy).
 3. **Top fixes** ranked by impact.
 4. **Verdict**: Pass / Pass-with-fixes / Needs rework.
+
+## Human review gate (hard stop)
+
+After reporting the plan review verdict, **stop**. Do not start `/code-create`,
+implementation, build/deployment work, or any downstream artifact in the same turn. The next
+stage requires explicit user approval or an explicit unattended end-to-end instruction in
+the user's latest message.

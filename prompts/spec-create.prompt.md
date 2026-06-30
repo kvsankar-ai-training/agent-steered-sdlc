@@ -340,3 +340,20 @@ traceability as a defect in the spec. Revise the spec and repeat checker + revie
 `/spec-review` would return Pass or an explicitly accepted Pass-with-fixes.
 
 Write the spec to `spec.md` in the workspace unless the user names another file.
+
+## Step 5 — Human review gate (hard stop)
+
+After writing or revising the spec and completing the checker/review loop above, **stop**.
+Do not start `/design-create`, `/plan-create`, `/code-create`, or any downstream artifact in
+the same turn.
+
+End with a human-review handoff that includes:
+
+- Spec path.
+- Work Scope and Implementation Readiness.
+- Checker/review result.
+- Key assumptions, open questions, and risks.
+- Recommended next command, normally `/design-create` only after the user approves the spec.
+
+Continue past this gate only if the user's latest message explicitly requested unattended
+end-to-end continuation or explicitly approves the next stage.

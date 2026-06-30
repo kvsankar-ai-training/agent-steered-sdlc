@@ -190,10 +190,17 @@ agents should run only the next appropriate SDLC stage by default. After creatin
 materially revising any spec, design, ADR, plan, code slice, or review report, stop for human
 review before starting the next downstream stage, even if mechanical checks pass.
 
-The stopping response should name the artifact path, readiness/status, key open questions,
-and the recommended next command. Continue automatically across multiple artifact stages
-only when the user explicitly asks for an end-to-end, unattended, or "continue through all
-stages" run.
+This is a **hard execution gate**. The agent must end its turn after the stopping response
+and must not start the next command in the same turn. A completed spec gates
+`/design-create`; a completed design gates `/plan-create`; a completed plan gates
+`/code-create`; a completed code slice gates the next code slice or release/deployment
+activity.
+
+The stopping response should name the artifact path, readiness/status, checker/review
+result, key open questions, and the recommended next command. Continue automatically across
+multiple artifact stages only when the user's latest message explicitly asks for an
+end-to-end, unattended, or "continue through all stages" run. YOLO mode does not bypass this
+human-review gate.
 
 The skill and creation commands are also input-gated by default. If important information is
 missing before a spec, design, plan, or code slice can be created or revised responsibly,

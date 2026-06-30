@@ -224,3 +224,9 @@ Otherwise:
 3. Qualitative scorecard (1–5 + fixes).
 4. **Top fixes** ranked by impact.
 5. **Verdict**: Pass / Pass-with-fixes / Needs rework.
+
+## Human review gate (hard stop)
+
+After reporting the code review verdict, **stop**. Do not move to the next PR, release,
+deployment, or any downstream artifact in the same turn. The next step requires explicit
+user approval or an explicit unattended end-to-end instruction in the user's latest message.

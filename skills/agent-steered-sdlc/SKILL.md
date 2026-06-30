@@ -32,6 +32,26 @@ and the recommended next command. Do not continue automatically to the next arti
 unless the user explicitly asks for an end-to-end, unattended, or "continue through all
 stages" run.
 
+## Hard Human Gates
+
+These gates are mandatory execution stops, not suggestions.
+
+- After creating, materially revising, or reviewing a spec, design, ADR, plan, or code
+  slice, **end the turn immediately after the status report**. Do not start the next
+  downstream command in the same turn.
+- A completed spec gates `/design-create`. A completed design gates `/plan-create`. A
+  completed plan gates `/code-create`. A completed code slice gates the next code slice or
+  release/deployment activity.
+- The stop report must include: artifact path(s), readiness/status, review/check result,
+  open questions or assumptions, and the exact recommended next command.
+- Continue past a gate only when the user's latest message explicitly approves the next
+  stage, for example "continue to design", "run /design-create", "approve spec", or
+  "continue end-to-end unattended".
+- YOLO mode only answers missing-input questions. It does **not** bypass human review gates.
+- Even if the matching review command passes, stop for human review before downstream work.
+- If a tool/runtime keeps planning downstream work after a gate, ignore that plan and
+  produce the stop report instead.
+
 Also operate in input-gated mode by default. If important information is missing before
 creating or revising a spec, design, plan, or code slice, pause and ask one focused question
 at a time rather than silently filling the gap. The user may opt into **YOLO mode** with
@@ -48,7 +68,7 @@ pause after an artifact unless the user also explicitly asks for end-to-end cont
   plan review, code, code review.
 - After creating or materially revising any spec, design, ADR, plan, code slice, or review
   report, pause for human review before starting the next downstream stage. The pause is a
-  default collaboration boundary, even when the generated artifact passes mechanical checks.
+  hard collaboration boundary, even when the generated artifact passes mechanical checks.
 - Use the three-scope model: product/system, feature/component, slice/change. Every artifact
   should declare Implementation Readiness as Exploratory, Decomposable, or Code-ready.
   Parent artifacts may pass as Decomposable; `/code-create` must only proceed from a
