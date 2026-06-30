@@ -85,7 +85,9 @@ It exits `0` only if every structural gate passes (non-zero otherwise) and emits
 - **oversized_prs** — implementation PRs declaring more than 300 LOC. This is a declared
   plan estimate, not measured diff size. Must be empty.
 - **prs_missing_loc** — implementation PRs without an estimated LOC declaration. Must be empty.
-- **prs_missing_tdd** — implementation PRs lacking a Red and a Green step. Must be empty.
+- **prs_missing_tdd** — implementation PRs lacking Red and Green step text. This is a
+  presence check; qualitative review must still judge whether the Red step would be a
+  meaningful failing test. Must be empty.
 - **forward_deps** — PRs depending on a later-numbered PR. Must be empty.
 - **orphan_refs**, **duplicates**, **bad_id_numbers** — must be empty.
 - **vague_hits** — count of "etc.", "and/or", "tbd", "as appropriate", "various".

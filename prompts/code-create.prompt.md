@@ -168,9 +168,12 @@ Use `--tests-argv` (for example `["pytest","-q","--cov=src"]`) for safe command 
 Use `--tests "<cmd>"` only for simple commands that split cleanly; use `--tests-shell` only
 when the project genuinely requires shell syntax such as pipes or compound commands, and
 document the trust boundary. Use the coverage threshold from `plan.md`/the done-definition.
-When a git base is known, include `--diff-base <base>` and `--require-git-evidence`; when
-the PR history is expected to preserve Red/Green commits or review notes, also include
-`--require-tdd-evidence`. Fix until gates pass or report which evidence is unavailable.
+Omit `--diff-base` when the checker can resolve a merge-base against the default branch;
+provide `--diff-base <base>` when the review target is known and automatic resolution is not
+right. Git diff-size and TDD evidence are required by default. Use
+`--allow-missing-git-evidence` or `--allow-missing-tdd-evidence` only when the repository
+cannot provide that evidence, and report the limitation explicitly. Fix until gates pass or
+report which evidence is unavailable.
 
 Then run the configured pre-commit/local quality gate, normally:
 

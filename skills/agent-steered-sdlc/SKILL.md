@@ -95,10 +95,14 @@ Select the narrowest command that matches the user's current artifact:
   `python` first, then `python3`, then `uv run python`.
 - Treat checker results as structural evidence, not proof of correctness. The checkers catch
   missing sections, malformed IDs, orphan references, missing trace links, declared oversize
-  PRs, missing Red/Green step text, unlabeled coverage output, missing assertion-adjacent
-  trace IDs, oversize git diffs when a base is supplied, and obvious skip/TODO markers. They
-  do not prove semantic correctness, test quality, or true TDD history; qualitative review
-  must judge those from artifact content, code, tests, and available review/git evidence.
+  PRs, missing Red/Green step text, unlabeled coverage output, missing same-test-block
+  assertion trace IDs, oversize git diffs against the resolved review base, and obvious
+  skip/TODO markers. Git diff-size and TDD evidence are required by default in code review;
+  use allow-missing flags only when the repo cannot provide that evidence and the report
+  states the limitation. Red/Green text, AT scenario shape, and commit-message TDD evidence
+  are presence checks; they do not prove semantic correctness, test quality, or true TDD
+  history. Qualitative review must judge those from artifact content, code, tests, and
+  available review/git evidence.
 - Configure and run language-appropriate local quality gates for code work. Prefer
   repository-native tooling and pre-commit hooks where practical.
 

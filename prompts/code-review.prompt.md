@@ -76,7 +76,7 @@ test assertions are meaningful, prove real TDD order, or measure PR diff size; V
 must judge those from the code, tests, and available git/review evidence.
 
 ```pwsh
-python checkers/check_code.py --plan plan.md --tests-argv '<json-array>' --cov-min <n> --diff-base <base> --json
+python checkers/check_code.py --plan plan.md --tests-argv '<json-array>' --cov-min <n> --json
 ```
 
 If all Python runners fail (`python`, `python3`, and `uv run python`), report the runner
@@ -85,24 +85,28 @@ failures and fall back to manual checks where possible.
 Always provide `--tests-argv` when possible. Use `--tests` only for simple split-safe
 commands, and use `--tests-shell` only for trusted commands that genuinely need shell
 features. The gate fails if no test command runs or if no coverage percentage is found in
-labeled coverage output. If a git base is known, provide `--diff-base <base>`; add
-`--require-git-evidence` when actual diff size must be enforced. Add
-`--require-tdd-evidence` only when the workflow preserves Red/Green evidence in commits or
-review notes. The checker exits `0` only if every structural gate passes and emits metrics:
+labeled coverage output. By default, the checker tries to resolve a review base using the
+merge-base with the remote/local default branch. Provide `--diff-base <base>` when the
+review target is known and automatic resolution is not right. If no review base can be
+resolved, actual PR size is reported as unverified and the gate fails; use
+`--allow-missing-git-evidence` only for non-git or intentionally evidence-poor reviews and
+state that limitation. TDD evidence from git log is also required by default; use
+`--allow-missing-tdd-evidence` only when Red/Green history is unavailable and state that
+limitation. The checker exits `0` only if every structural gate passes and emits metrics:
 
 - **tests_pass** — the suite returns success; **no skipped/xfail** tests.
 - **coverage_pct** — line coverage ≥ `--cov-min` (default 80).
 - **pr_traceability_pct** — every plan PR-ID is referenced by ≥1 test. Must be 100%.
 - **id_traceability_pct** — every FR/AT/COMP appears in a test docstring/comment. Must be 100%.
-- **id_assertion_traceability_pct** — every FR/AT/COMP appears near a non-trivial
-  assertion-like statement. Must be 100%.
+- **id_assertion_traceability_pct** — every FR/AT/COMP appears in the same test/function
+  block as a non-trivial assertion-like statement. Must be 100%.
 - **oversized_modules** — files exceeding the LOC ceiling. Must be empty.
 - **diff_loc / diff_evidence / oversized_diff** — actual added+deleted lines from
   `git diff --numstat` when git evidence is available. If unavailable, qualitative review
   must say actual PR size was not independently verified.
-- **tdd_evidence** — Red/Green markers from git log when a base is provided or history is
-  available. If unavailable, qualitative review must say TDD order was not independently
-  verified.
+- **tdd_evidence** — Red/Green presence markers from git log between the review base and
+  `HEAD`. This is a presence check, not proof that tests really failed before implementation;
+  qualitative review must confirm TDD authenticity.
 - **vague_hits** — TODO/FIXME/"etc."/skipped markers. Must be 0.
 - **gates** + `passed/total`.
 

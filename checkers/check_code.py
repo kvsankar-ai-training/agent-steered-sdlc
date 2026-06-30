@@ -12,6 +12,8 @@ Usage:
                          [--tests "pytest -q"] [--tests-shell]
                          [--cov-min 80] [--tests-dir tests] [--src .]
                          [--max-loc 600] [--max-diff-loc 300]
+                         [--diff-base <ref>] [--allow-missing-git-evidence]
+                         [--allow-missing-tdd-evidence]
                          [--src-ext .py,.ts,.tsx,.js,.jsx]
                          [--spec spec.md] [--design design.md] [--json]
 """
@@ -42,11 +44,21 @@ ASSERTION = re.compile(
 )
 WEAK_ASSERTION = re.compile(
     r"\b(assert\s+true|expect\(\s*true\s*\)|assert\.ok\(\s*true\s*\)|"
-    r"assertTrue\(\s*true\s*\)|XCTAssertTrue\(\s*true\s*\))",
+    r"assertTrue\(\s*true\s*\)|XCTAssertTrue\(\s*true\s*\)|"
+    r"assert\s+(?P<num>\d+(?:\.\d+)?)\s*==\s*(?P=num)|"
+    r"assert\s+(?P<quote>['\"])(?P<text>.*?)(?P=quote)\s*==\s*"
+    r"(?P=quote)(?P=text)(?P=quote)|"
+    r"expect\(\s*(?P<expect_num>\d+(?:\.\d+)?)\s*\)\.to(?:Be|Equal)"
+    r"\(\s*(?P=expect_num)\s*\))",
     re.I,
 )
 TDD_RED = re.compile(r"\b(red|failing test|fail(?:ing)? first|test first)\b", re.I)
 TDD_GREEN = re.compile(r"\b(green|pass(?:ing)? test|implement|implementation)\b", re.I)
+TEST_START = re.compile(
+    r"^\s*(?:def\s+test_|async\s+def\s+test_|function\s+test|"
+    r"(?:it|test|describe)\s*\(|[\w.]+\.test\s*\()",
+    re.I,
+)
 
 
 def arg(flag, default=None):
@@ -104,20 +116,34 @@ def test_command() -> tuple[list[str] | str | None, bool]:
     return shlex.split(cmd, posix=os.name != "nt"), False
 
 
+def test_blocks(test_text: str) -> list[str]:
+    blocks: list[list[str]] = []
+    current: list[str] = []
+    for line in test_text.splitlines():
+        if TEST_START.search(line) and current:
+            blocks.append(current)
+            current = [line]
+        else:
+            current.append(line)
+    if current:
+        blocks.append(current)
+    return ["\n".join(block) for block in blocks]
+
+
+def has_nontrivial_assertion(block: str) -> bool:
+    return bool(ASSERTION.search(block)) and not bool(WEAK_ASSERTION.search(block))
+
+
 def assertion_linked_ids(test_text: str, wanted: set[str]) -> set[str]:
-    """IDs whose nearby test block has a non-trivial assertion-like statement."""
-    lines = test_text.splitlines()
+    """IDs whose own test/function block has a non-trivial assertion-like statement."""
     linked: set[str] = set()
-    for idx, line in enumerate(lines):
+    for block in test_blocks(test_text):
         ids_here = {
-            item for item in wanted if item in line or item.replace("-", "_") in line
+            item for item in wanted if item in block or item.replace("-", "_") in block
         }
-        if not ids_here:
+        if not ids_here or not has_nontrivial_assertion(block):
             continue
-        window = "\n".join(lines[idx : min(len(lines), idx + 18)])
-        has_assertion = ASSERTION.search(window) and not WEAK_ASSERTION.search(window)
-        if has_assertion:
-            linked.update(ids_here)
+        linked.update(ids_here)
     return linked
 
 
@@ -126,19 +152,48 @@ def git_output(args: list[str], cwd: Path) -> tuple[int, str]:
     return result.returncode, result.stdout.strip()
 
 
-def git_diff_loc(root: Path, base: str | None) -> tuple[int | None, str]:
+def is_git_repo(root: Path) -> bool:
     rc, _ = git_output(["git", "rev-parse", "--is-inside-work-tree"], root)
-    if rc != 0:
+    return rc == 0
+
+
+def git_ref_exists(root: Path, ref: str) -> bool:
+    rc, _ = git_output(["git", "rev-parse", "--verify", ref], root)
+    return rc == 0
+
+
+def auto_diff_base(root: Path, explicit_base: str | None) -> tuple[str | None, str]:
+    if not is_git_repo(root):
         return None, "not_git_repo"
-    if base:
-        diff_args = ["git", "diff", "--numstat", base, "--"]
-        evidence = f"git_diff_{base}"
-    else:
-        rc, _ = git_output(["git", "rev-parse", "--verify", "HEAD"], root)
-        if rc != 0:
-            return None, "no_head"
-        diff_args = ["git", "diff", "--numstat", "HEAD", "--"]
-        evidence = "git_diff_HEAD"
+    if explicit_base:
+        return explicit_base, f"explicit:{explicit_base}"
+    rc, current = git_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], root)
+    if rc != 0:
+        return None, "no_current_branch"
+    rc, default_ref = git_output(
+        ["git", "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"],
+        root,
+    )
+    candidates = [default_ref] if rc == 0 and default_ref else []
+    candidates.extend(["origin/main", "origin/master", "main", "master"])
+    seen: set[str] = set()
+    for candidate in candidates:
+        if candidate in seen or not git_ref_exists(root, candidate):
+            continue
+        seen.add(candidate)
+        if current == candidate.split("/")[-1]:
+            return None, "on_default_branch_no_review_base"
+        rc, merge_base = git_output(["git", "merge-base", "HEAD", candidate], root)
+        if rc == 0 and merge_base:
+            return merge_base, f"merge_base:{candidate}"
+    return None, "no_merge_base"
+
+
+def git_diff_loc(root: Path, base: str | None) -> tuple[int | None, str]:
+    resolved_base, evidence = auto_diff_base(root, base)
+    if resolved_base is None:
+        return None, evidence
+    diff_args = ["git", "diff", "--numstat", resolved_base, "HEAD", "--"]
     rc, out = git_output(diff_args, root)
     if rc != 0:
         return None, "diff_failed"
@@ -152,21 +207,16 @@ def git_diff_loc(root: Path, base: str | None) -> tuple[int | None, str]:
 
 
 def git_tdd_evidence(root: Path, base: str | None) -> dict[str, object]:
-    rc, _ = git_output(["git", "rev-parse", "--is-inside-work-tree"], root)
-    if rc != 0:
-        return {"available": False, "reason": "not_git_repo"}
-    if base:
-        rev_range = f"{base}..HEAD"
-    else:
-        rc, _ = git_output(["git", "rev-parse", "--verify", "HEAD"], root)
-        if rc != 0:
-            return {"available": False, "reason": "no_head"}
-        rev_range = "HEAD"
+    resolved_base, base_evidence = auto_diff_base(root, base)
+    if resolved_base is None:
+        return {"available": False, "reason": base_evidence}
+    rev_range = f"{resolved_base}..HEAD"
     rc, log = git_output(["git", "log", "--format=%s%n%b", rev_range], root)
     if rc != 0:
         return {"available": False, "reason": "log_failed"}
     return {
         "available": True,
+        "base": base_evidence,
         "red_marker": bool(TDD_RED.search(log)),
         "green_marker": bool(TDD_GREEN.search(log)),
     }
@@ -181,8 +231,8 @@ def main() -> int:
     max_loc = int(arg("--max-loc", "600"))
     max_diff_loc = int(arg("--max-diff-loc", "300"))
     diff_base = arg("--diff-base")
-    require_git = "--require-git-evidence" in sys.argv
-    require_tdd = "--require-tdd-evidence" in sys.argv
+    require_git = "--allow-missing-git-evidence" not in sys.argv
+    require_tdd = "--allow-missing-tdd-evidence" not in sys.argv
     src_ext = {
         e.strip()
         for e in arg("--src-ext", ".py,.ts,.tsx,.js,.jsx").split(",")
@@ -257,8 +307,10 @@ def main() -> int:
         "diff_loc": diff_loc,
         "max_diff_loc": max_diff_loc,
         "diff_evidence": diff_evidence,
+        "git_evidence_required": require_git,
         "oversized_diff": oversized_diff,
         "tdd_evidence": tdd_evidence,
+        "tdd_evidence_required": require_tdd,
         "vague_hits": len(vague),
         "gates": gates,
         "passed": sum(gates.values()),

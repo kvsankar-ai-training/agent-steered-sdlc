@@ -60,7 +60,8 @@ It exits `0` only if every structural gate passes (non-zero otherwise) and emits
 - **nfr_missing_units** — NFRs without a number+unit.
 - **nfr_unit_mismatches** — NFRs whose obvious quality dimension does not match the unit.
 - **ats_missing_scenario_shape** — ATs that do not contain Given/When/Then or an equivalent
-  observable/measurable verification shape.
+  observable/measurable verification shape. This is a presence check; qualitative review
+  must still judge whether the acceptance test is meaningful.
 - **vague_hits** — count of "etc.", "and/or", "tbd", "as appropriate", "fast", "easy".
 - **gates** + `passed/total`.
 

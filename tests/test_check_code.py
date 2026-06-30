@@ -26,6 +26,7 @@ def run_check_code(
     monkeypatch,
     capsys,
     test_body: str | None = None,
+    extra_args: list[str] | None = None,
 ):
     plan = tmp_path / "plan.md"
     spec = tmp_path / "spec.md"
@@ -42,7 +43,8 @@ def run_check_code(
         or (
             "def test_auth():\n"
             '    """Covers PR-AUTH-10, FR-AUTH-10, AT-AUTH-10, COMP-AUTH."""\n'
-            "    assert 'granted' == 'granted'\n"
+            "    result = 'granted'\n"
+            "    assert result == 'granted'\n"
         ),
         encoding="utf-8",
     )
@@ -65,7 +67,10 @@ def run_check_code(
             str(src),
             "--tests-argv",
             json.dumps(test_argv),
+            "--allow-missing-git-evidence",
+            "--allow-missing-tdd-evidence",
             "--json",
+            *(extra_args or []),
         ],
     )
     rc = module.main()
@@ -134,6 +139,47 @@ def test_check_code_rejects_id_only_weak_assertion(tmp_path, monkeypatch, capsys
     ]
 
 
+def test_check_code_rejects_tautological_assertion(tmp_path, monkeypatch, capsys):
+    weak_test = (
+        "def test_auth():\n"
+        '    """Covers PR-AUTH-10, FR-AUTH-10, AT-AUTH-10, COMP-AUTH."""\n'
+        "    assert 1 == 1\n"
+    )
+
+    rc, report = run_check_code(
+        tmp_path,
+        [sys.executable, "-c", "print('coverage: 80%')"],
+        monkeypatch,
+        capsys,
+        weak_test,
+    )
+
+    assert rc == 1
+    assert report["gates"]["id_assertion_traceability_100"] is False
+
+
+def test_check_code_rejects_neighbor_assertion_bleed(tmp_path, monkeypatch, capsys):
+    neighbor_test = (
+        "def test_real_behavior():\n"
+        "    result = 'granted'\n"
+        "    assert result == 'granted'\n\n"
+        "def test_placeholder():\n"
+        '    """Covers PR-AUTH-10, FR-AUTH-10, AT-AUTH-10, COMP-AUTH."""\n'
+        "    pass\n"
+    )
+
+    rc, report = run_check_code(
+        tmp_path,
+        [sys.executable, "-c", "print('coverage: 80%')"],
+        monkeypatch,
+        capsys,
+        neighbor_test,
+    )
+
+    assert rc == 1
+    assert report["gates"]["id_assertion_traceability_100"] is False
+
+
 def test_git_diff_loc_measures_actual_changed_lines(tmp_path):
     check_code = load_check_code()
     git(tmp_path, "init")
@@ -145,10 +191,46 @@ def test_git_diff_loc_measures_actual_changed_lines(tmp_path):
     git(tmp_path, "commit", "-m", "baseline")
 
     source.write_text("one\ntwo\nthree\n", encoding="utf-8")
+    git(tmp_path, "add", "app.py")
+    git(tmp_path, "commit", "-m", "change")
 
-    diff_loc, evidence = check_code.git_diff_loc(tmp_path, "HEAD")
+    diff_loc, evidence = check_code.git_diff_loc(tmp_path, "HEAD~1")
     assert diff_loc == 2
-    assert evidence == "git_diff_HEAD"
+    assert evidence == "explicit:HEAD~1"
+
+
+def test_git_diff_loc_refuses_default_branch_without_review_base(tmp_path):
+    check_code = load_check_code()
+    git(tmp_path, "init")
+    git(tmp_path, "config", "user.email", "test@example.com")
+    git(tmp_path, "config", "user.name", "Test User")
+    source = tmp_path / "app.py"
+    source.write_text("one\n", encoding="utf-8")
+    git(tmp_path, "add", "app.py")
+    git(tmp_path, "commit", "-m", "baseline")
+
+    diff_loc, evidence = check_code.git_diff_loc(tmp_path, None)
+    assert diff_loc is None
+    assert evidence == "on_default_branch_no_review_base"
+
+
+def test_git_diff_loc_uses_auto_merge_base_on_feature_branch(tmp_path):
+    check_code = load_check_code()
+    git(tmp_path, "init")
+    git(tmp_path, "config", "user.email", "test@example.com")
+    git(tmp_path, "config", "user.name", "Test User")
+    source = tmp_path / "app.py"
+    source.write_text("one\n", encoding="utf-8")
+    git(tmp_path, "add", "app.py")
+    git(tmp_path, "commit", "-m", "baseline")
+    git(tmp_path, "checkout", "-b", "feature")
+    source.write_text("one\ntwo\nthree\n", encoding="utf-8")
+    git(tmp_path, "add", "app.py")
+    git(tmp_path, "commit", "-m", "red: failing test\ngreen: implementation")
+
+    diff_loc, evidence = check_code.git_diff_loc(tmp_path, None)
+    assert diff_loc == 2
+    assert evidence == "merge_base:master"
 
 
 def test_git_tdd_evidence_reads_red_and_green_markers(tmp_path):
@@ -170,6 +252,7 @@ def test_git_tdd_evidence_reads_red_and_green_markers(tmp_path):
     evidence = check_code.git_tdd_evidence(tmp_path, "HEAD~2")
     assert evidence == {
         "available": True,
+        "base": "explicit:HEAD~2",
         "red_marker": True,
         "green_marker": True,
     }

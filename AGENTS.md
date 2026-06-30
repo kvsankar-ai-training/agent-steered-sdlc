@@ -229,17 +229,20 @@ command with `python3`; if that is unavailable, retry with `uv run python`.
 
 Flags: `--json`, `--tests-argv <json-array>`, `--tests <cmd>`, `--tests-shell`,
 `--cov-min <n>`, `--tests-dir <dir>`, `--src <dir>`, `--max-loc <n>`,
-`--max-diff-loc <n>`, `--diff-base <ref>`, `--require-git-evidence`,
-`--require-tdd-evidence`, `--spec <file>`, `--design <file>`. Exits non-zero on any gate
-failure.
+`--max-diff-loc <n>`, `--diff-base <ref>`, `--allow-missing-git-evidence`,
+`--allow-missing-tdd-evidence`, `--spec <file>`, `--design <file>`. Git diff-size and TDD
+evidence are required by default; use the allow flags only when the repository cannot
+provide that evidence and the review report will state the limitation. Exits non-zero on any
+gate failure.
 
 Checker limits: these scripts are deterministic structural gates. They catch missing
 sections, malformed IDs, orphan references, missing trace links, declared oversize PRs,
-missing Red/Green step text, unlabeled coverage output, missing assertion-adjacent trace
-IDs, oversize git diffs when a base is supplied, and obvious skip/TODO markers. They do not
-prove semantic correctness, test quality, or true TDD history; the qualitative review prompts
-must judge those concerns from the artifact content, code, tests, and available review/git
-evidence.
+missing Red/Green step text, unlabeled coverage output, missing same-test-block assertion
+trace IDs, oversize git diffs against the resolved review base, and obvious skip/TODO
+markers. Red/Green text, AT scenario shape, and commit-message TDD evidence are presence
+checks; they do not prove semantic correctness, test quality, or true TDD history. The
+qualitative review prompts must judge those concerns from the artifact content, code, tests,
+and available review/git evidence.
 
 ## Installation
 
