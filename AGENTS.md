@@ -492,6 +492,13 @@ agent config, bundled `prompts/*.prompt.md`, and bundled `checkers/*.py`. The pr
 stage skill aliases, and checkers are also installed separately where the host tool or
 target workspace expects direct access.
 
+The source bundle at `skills/agent-steered-sdlc` is also expected to be self-contained so
+generic skill installers can copy it directly. If an agent reports that stage prompts or
+checker scripts are missing, treat that as an incomplete install or stale checkout, not as a
+normal qualitative-only mode. Verify that the installed skill contains files such as
+`prompts/spec-create.prompt.md` and `checkers/check_spec.py`, then rerun the installer or
+refresh the source bundle.
+
 If the target is this commands repository itself, the installer warns because project-local
 artifacts such as `.github/prompts` and `checkers` may be written into the source checkout;
 that is acceptable for dogfooding, but product installs should pass `-TargetRoot` /

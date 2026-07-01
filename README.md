@@ -98,6 +98,13 @@ them directly.
 
 Every dry or real install prints the destination folders before doing work.
 
+If an agent reports that `spec-create`, another stage prompt, or `checkers/check_*.py` are
+missing, the installed skill is incomplete or was copied from the wrong folder. A valid
+skill install should contain files such as `prompts/spec-create.prompt.md` and
+`checkers/check_spec.py` under the same `agent-steered-sdlc` skill directory. Re-run the
+installer, or install from this repository's `skills/agent-steered-sdlc` folder after
+updating to a version where that source folder is self-contained.
+
 ## Commands
 
 The prompt set uses four verbs:

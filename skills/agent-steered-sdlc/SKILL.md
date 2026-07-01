@@ -7,8 +7,13 @@ description: End-to-end SDLC workflow for agent-steered creation, review, verifi
 
 Use the installed stage command, prompt, or skill when the host supports one. If a stage is
 not directly invokable, use this skill bundle's `prompts/*.prompt.md` files and follow the
-matching prompt exactly. If bundled prompts are unavailable, locate this repository's
-`prompts/*.prompt.md` as a fallback.
+matching prompt exactly. This skill bundle is expected to be self-contained: `SKILL.md`,
+`agents/`, `prompts/*.prompt.md`, and `checkers/*.py` should be present together. If a
+required bundled stage prompt is missing, treat the skill installation as incomplete: search
+the current workspace and common user skill locations for another `agent-steered-sdlc`
+bundle or this repository's `prompts/*.prompt.md`, report the incomplete install clearly,
+and ask the user to reinstall if no prompt can be found. Do not silently continue as though
+the stage prompt were optional.
 
 GitHub Copilot CLI note: prompt files do not become arbitrary built-in CLI slash commands.
 The installer creates direct stage skill aliases such as `spec-create`, `code-review`, and
@@ -232,7 +237,10 @@ pause after an artifact unless the user also explicitly asks for end-to-end cont
 - Run deterministic structural checkers after creating, verifying, or assessing artifacts. Prefer the
   checkers bundled in this skill at `checkers/check_*.py`; otherwise use the target
   workspace's `checkers/check_*.py` or this repository's `checkers/check_*.py`. Try `python`
-  first, then `python3`, then `uv run python`.
+  first, then `python3`, then `uv run python`. If no checker scripts can be found, treat
+  that as an incomplete installation or missing project tooling. Report the exact checker
+  that is missing, search likely installed skill/workspace locations, and stop for user
+  direction or reinstall unless the user explicitly approves a qualitative-only pass.
 - Treat checker results as structural evidence, not proof of correctness. The checkers catch
   missing sections, malformed IDs, orphan references, missing trace links, declared oversize
   PRs, missing Red/Green step text, unlabeled coverage output, missing same-test-block
@@ -257,5 +265,8 @@ Use the bundled or installed `checkers/check_*.py` scripts when present:
 - `check_plan.py` for plans.
 - `check_code.py` for code/test traceability and quality gates.
 
-If the scripts are missing, report that deterministic verification is unavailable
-and continue with the qualitative review required by the matching prompt.
+If the scripts are missing from the skill bundle, target workspace, and repository fallback,
+do not frame deterministic verification as merely unavailable. Report that the SDLC install
+or workspace is incomplete, name the missing checker, and ask the user to reinstall or point
+you at the checker location. Continue with qualitative-only review only after the user
+explicitly accepts that degraded mode, and state the limitation in the report.
