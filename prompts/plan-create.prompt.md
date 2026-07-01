@@ -204,6 +204,8 @@ Read `spec.md` and `design.md` first. Then interview the user **one question at 
 - **UX/presentation work**: For UI-facing work, which stylesheet/design-token/component
   library/layout/error-state/responsive/accessibility work is in scope, and which PR owns
   non-brittle checks for it?
+- **Mock UI approval**: If the spec/design requires a mock UI, where is the mock artifact,
+  has the user approved it, and which PRs are constrained by it?
 - **Sequencing**: which capability ships first; flags vs. trunk; migration order.
 - **Parallel execution**: which PRs can be built concurrently, whether Git worktrees should
   be used for independent branches, and which files/modules are likely to conflict.
@@ -251,7 +253,8 @@ work.
    **Logging/Telemetry Work** (structured logs, events, metrics, traces, audit/support IDs,
    correlation, redaction, alert hooks, or `None` with rationale); **Error Handling Work**
    (UI/API/domain/integration/infrastructure error mapping, retry/fallback/degraded
-   behavior, safe messages, or `None` with rationale); **Test Levels**
+   behavior, safe messages, or `None` with rationale); **Mock UI Dependency** (approved
+   mock path/status for UI-facing PRs, or `None` with rationale); **Test Levels**
    (acceptance/e2e, unit, component, contract, integration, UI/accessibility/visual,
    quality/NFR, build/deploy, docs, migration/ops as applicable); **Contract Fixtures**
    (shared fixture/schema/generated-client/contract-test source for boundary payloads, or
@@ -336,6 +339,8 @@ Pass-with-fixes.
   truth used by tests; invented mock payload shapes are treated as plan defects.
 - UI-facing PRs include planned presentation/layout/responsive/accessibility/error-state
   work or explicitly state why that quality work is out of scope.
+- If a mock UI is required, UI-facing PRs reference the approved mock artifact and must not
+  start until that mock is explicitly approved by the user.
 - Logging/telemetry and error-handling work is assigned to PRs whenever the spec/design
   calls for it; otherwise the plan states why it is out of scope.
 - Build artifact creation, packaging, deployment scripts/manifests/IaC, deployment dry runs,

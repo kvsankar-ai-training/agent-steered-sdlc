@@ -46,6 +46,9 @@ Score each item 1-5 and give one concrete fix for any score below 5:
 - UX/presentation quality: UI-facing work has explicit expectations for baseline styling,
   layout, responsive behavior, accessibility, and readable loading/empty/error/validation
   states, or scopes them out deliberately.
+- Mock UI preference: UI-facing specs record whether a mock UI is Required, Optional, Not
+  needed, or Deferred; Required mocks include an explicit human approval gate before
+  production UI implementation.
 - Boundary contract quality: externally consumed API/event/file/SDK/CLI/webhook success and
   error shapes are defined when consumers or user-visible behavior depend on them.
 - Logging and telemetry quality: required logs, events, metrics, traces, audit records,

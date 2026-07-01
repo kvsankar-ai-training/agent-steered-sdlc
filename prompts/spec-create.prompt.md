@@ -147,6 +147,10 @@ state the externally observable quality bar:
   responsive behavior, loading/empty/error states, readability, accessibility, and affordance
   clarity. If styling is intentionally minimal or deferred, record that as a Non-Goal or
   open question.
+- **Mock UI preference**: for UI-facing products, ask whether the user wants a mock UI before
+  downstream design/planning/code. Record `UI Mock Preference: Required | Optional | Not
+  needed | Deferred` in the spec. If it is Required, state that mock UI approval is a hard
+  human gate before production UI implementation.
 - **Human-readable feedback**: validation, domain, authorization, connectivity, and
   unexpected failures shall surface useful, safe, user-understandable text without leaking
   raw objects, stack traces, or implementation internals.
@@ -313,6 +317,9 @@ answer, then ask the next. Never batch questions. Keep going until gaps close. C
 - **User experience quality**: For UI-facing work, what baseline styling, layout,
   responsiveness, loading/empty/error states, accessibility, and human-readable feedback are
   expected? What is explicitly out of scope?
+- **Mock UI preference**: For UI-facing work, should a mock UI be developed before design,
+  planning, or code? If yes, what fidelity is enough, which screens/states/flows must appear,
+  and who must approve it?
 - **External contract expectations**: Which API/event/file/SDK/CLI/webhook success and
   error shapes are externally visible or consumed across a boundary? Which variants must be
   human-readable or contract-tested?
@@ -380,7 +387,8 @@ Use **descriptive slug-only IDs**. Do not use numeric suffixes.
 9. **Traceability Matrix** — needs → non-goals/scope boundaries → features → use cases →
    requirements → acceptance tests, including priority/risk where known.
 10. **Assumptions & Open Questions** — unconfirmed facts, source/research notes,
-   out-of-scope/deferred items, priority trade-offs, and change-impact notes for revisions.
+   out-of-scope/deferred items, priority trade-offs, UI mock preference and approval gate
+   when relevant, and change-impact notes for revisions.
 
 ## Quality rules
 
@@ -400,6 +408,9 @@ Use **descriptive slug-only IDs**. Do not use numeric suffixes.
 - UI/presentation quality, loading/empty/error states, accessibility, and responsive behavior
   are either captured as measurable requirements/acceptance criteria or explicitly deferred
   as non-goals/open questions when the product has a UI.
+- UI-facing specs record `UI Mock Preference: Required | Optional | Not needed | Deferred`.
+  If Required, the spec states that mock UI approval is a hard human gate before production
+  UI implementation.
 - External boundary contracts, including success/error body shapes that consumers depend on,
   are captured as requirements/acceptance criteria or explicitly deferred as non-goals/open
   questions.

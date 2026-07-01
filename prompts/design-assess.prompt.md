@@ -178,6 +178,9 @@ Reasoned judgment, scored 1–5 with one concrete fix each:
 - **User-facing presentation and feedback** — UI designs define the styling/layout approach,
   responsive behavior, readable loading/empty/error/validation states, and any deliberate
   styling deferrals.
+- **Mock UI gate** — when the upstream spec requires a mock UI, the design includes or
+  references a concrete mock artifact, covers representative screens/states/flows, and has
+  explicit user approval or a blocking approval-needed status before downstream UI work.
 - **State, data, and side effects** — mutable state, persistence, consistency, transactions,
   concurrency, time, external calls, retries, migrations, and recovery are deliberate.
 - **Functional core / imperative shell** — pure decision logic, rules, validation, state

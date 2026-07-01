@@ -51,6 +51,8 @@ Score each item 1-5 and give one concrete fix for any score below 5:
 - UX/presentation allocation: UI-facing PRs assign baseline styling/layout,
   responsive/accessibility checks, and readable loading/empty/error/validation states, or
   explicitly scope them out.
+- Mock UI approval: if the spec/design requires a mock UI, UI-facing PRs reference the
+  approved mock artifact and block until approval is explicit.
 - Logging/error-handling allocation: PRs assign structured logs, telemetry, correlation/
   support IDs, redaction, alert hooks, representative failure-path tests, error mapping,
   retry/fallback/degraded behavior, and safe UI/API messages where required.

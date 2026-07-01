@@ -56,8 +56,8 @@ including ambiguous requirements, missing acceptance criteria, untestable design
 incorrect component boundaries, plan slices that cannot be built independently, missing NFR
 validation, missing logging/telemetry/error-handling intent, missing build/release/
 deployment intent, missing/incorrect Planned Touch Sets, missing user/developer
-documentation intent, traceability gaps, or implementation behavior that suggests the
-upstream artifact specified the wrong thing.
+documentation intent, missing approved mock UI for required UI-facing work, traceability
+gaps, or implementation behavior that suggests the upstream artifact specified the wrong thing.
 
 Also verify the upstream artifacts were code-ready for this implementation. If `spec.md`,
 `design.md`, or `plan.md` declares Exploratory or Decomposable readiness, or if `plan.md`
@@ -219,6 +219,9 @@ Reasoned judgment, scored 1–5 with one concrete fix each:
   and readable loading/empty/error/validation states are implemented; behavior tests use
   role/text/semantic selectors rather than CSS classes unless style is the contract under
   test.
+- **Mock UI fidelity** — when a mock UI was required, production UI changes match the
+  approved mock's screens, states, flows, copy intent, and responsive expectations, or
+  clearly record an approved deviation.
 - **Logging and telemetry fitness** — planned structured logs, events, metrics, traces,
   audit/support IDs, correlation propagation, redaction, alert hooks, and human/agent
   debugging signals are implemented, tested, stable, useful, and free of secrets or

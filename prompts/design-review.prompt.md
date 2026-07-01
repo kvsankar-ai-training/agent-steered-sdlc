@@ -47,6 +47,9 @@ Score each item 1-5 and give one concrete fix for any score below 5:
 - UI presentation and feedback: UI-facing designs define baseline styling/layout,
   responsive behavior, accessibility, and readable loading/empty/error/validation states, or
   deliberately scope them out.
+- Mock UI gate: when the spec requires a mock UI, the design references a concrete mock UI
+  artifact, covers representative screens/states/flows, and stops for explicit user
+  approval before downstream production UI work.
 - Data and side effects: state ownership, persistence, transactions, idempotency,
   concurrency, migrations, and rollback are addressed where relevant.
 - Quality attributes: performance, security, privacy, reliability, accessibility,

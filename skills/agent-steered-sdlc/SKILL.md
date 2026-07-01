@@ -74,6 +74,10 @@ These gates are mandatory execution stops, not suggestions.
   "continue end-to-end unattended".
 - YOLO mode only answers missing-input questions. It does **not** bypass human review gates.
 - Even if the matching `*-assess` command passes, stop for human review before downstream work.
+- For UI-facing products where the spec records `UI Mock Preference: Required`, creating or
+  materially revising the mock UI is a hard human gate. Stop after producing the mock UI
+  artifact, report its path, and do not proceed to planning, code, or production UI work
+  until the user explicitly approves it.
 - If a tool/runtime keeps planning downstream work after a gate, ignore that plan and
   produce the stop report instead.
 
@@ -110,32 +114,36 @@ pause after an artifact unless the user also explicitly asks for end-to-end cont
 - Apply the artifact matrix:
   - Product/system spec carries mission, stakeholders, boundary, product needs, non-goals,
     major capabilities, representative use cases, major NFRs, logging/telemetry and
-    error-handling expectations, build/release/deployment expectations, user/developer
-    documentation expectations, broad acceptance intent, and child-artifact needs; design
+    error-handling expectations, UI mock preference for UI-facing products,
+    build/release/deployment expectations, user/developer documentation expectations, broad
+    acceptance intent, and child-artifact needs; design
     carries HLD context, major containers/services/modules, drivers, boundaries, data
-    ownership, quality tactics, logging/telemetry strategy, error-handling strategy,
-    build/package/release strategy, deployment/operations, documentation strategy, ADRs, risks, and decomposition
-    candidates; plan is normally a Breakdown plan with feature/component `WORK-` items,
-    dependencies, child artifact needs, logging/error-handling tracks, build/deployment
-    tracks, documentation tracks, parallel tracks, and readiness targets.
+    ownership, quality tactics, mock UI artifact/approval when required, logging/telemetry
+    strategy, error-handling strategy, build/package/release strategy, deployment/
+    operations, documentation strategy, ADRs, risks, and decomposition candidates; plan is
+    normally a Breakdown plan with feature/component `WORK-` items, dependencies, child
+    artifact needs, mock approval, logging/error-handling tracks, build/deployment tracks,
+    documentation tracks, parallel tracks, and readiness targets.
   - Feature/component spec carries parent references, local behavior, FR/NFR/AT coverage,
-    edge cases, logging/telemetry and error-handling constraints, build/deployment
-    constraints, documentation constraints, dependencies, and non-goals; design carries
-    responsibilities, contracts, local state/data, runtime flows, core/shell split,
-    dependencies, logging/error-handling impacts, build/deployment impacts, documentation
-    impacts, decisions, risks, and explicit `TEST-` obligations; plan carries child
-    slice/change work or PRs, integration order, `AT-`/`TEST-` allocation,
-    logging/error-handling allocation, build/deployment allocation, documentation
-    allocation, and touch-scope risks.
+    edge cases, UI mock preference, logging/telemetry and error-handling constraints,
+    build/deployment constraints, documentation constraints, dependencies, and non-goals;
+    design carries responsibilities, contracts, local state/data, runtime flows, core/shell
+    split, dependencies, mock UI artifact/approval when required, logging/error-handling
+    impacts, build/deployment impacts, documentation impacts, decisions, risks, and explicit
+    `TEST-` obligations; plan carries child slice/change work or PRs, integration order,
+    `AT-`/`TEST-` allocation, mock approval, logging/error-handling allocation,
+    build/deployment allocation, documentation allocation, and touch-scope risks.
   - Slice/change spec carries the exact requirement delta, parent IDs refined/preserved,
-    changed/unchanged behavior, logging/error-handling deltas, documentation deltas, and
-    acceptance criteria; design carries LLD-level local changes, API/schema/data deltas,
-    failure paths, validation/policy logic, logging/telemetry changes, build/deployment
-    script or artifact changes, documentation changes, migration/rollback, side effects,
-    `TEST-` obligations/doubles, and likely touch candidates;
+    changed/unchanged behavior, UI mock preference/delta, logging/error-handling deltas,
+    documentation deltas, and acceptance criteria; design carries LLD-level local changes,
+    API/schema/data deltas, failure paths, validation/policy logic, mock UI artifact/
+    approval when required, logging/telemetry changes, build/deployment script or artifact
+    changes, documentation changes, migration/rollback, side effects, `TEST-` obligations/
+    doubles, and likely touch candidates;
     plan carries concrete `PR-` items, Planned Touch Sets, Red/Green steps, `AT-`/`TEST-` allocation,
-    LOC estimates, quality gates, logging/error-handling verification, build/deployment
-    verification, documentation checks, rollback, dependencies, and worktree guidance.
+    LOC estimates, quality gates, mock approval, logging/error-handling verification,
+    build/deployment verification, documentation checks, rollback, dependencies, and
+    worktree guidance.
 - Treat test ownership as part of artifact ownership: specs define `AT-` acceptance
   criteria at product/system, feature/component, and slice/change scope; designs define
   explicit `TEST-` executable test obligations for lower-level and workflow checks; plans
@@ -165,6 +173,12 @@ pause after an artifact unless the user also explicitly asks for end-to-end cont
   documentation architecture, source locations, generated/reference docs, publishing,
   ownership, and validation checks; plans assign documentation files and checks to work
   items or PRs; code updates docs with implementation and validates them where practical.
+- Treat UI mock ownership as part of artifact ownership for UI-facing products: specs ask
+  the user whether a mock UI is required, optional, not needed, or deferred; designs create
+  or update `mock-ui.html` or the repo's established mock location when required, covering
+  representative screens, states, flows, and error/empty/loading behavior; plans assign
+  mock-driven UI implementation and visual/accessibility checks to PRs; code must block if
+  a required mock UI has not been approved by the user.
 - Treat logging, telemetry, and error handling as part of artifact ownership: specs define
   externally relevant human/agent/operator diagnostics, privacy/redaction constraints,
   telemetry events/metrics/traces, error categories, user-facing error behavior, and

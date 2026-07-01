@@ -119,6 +119,9 @@ design's ability to satisfy requirements and quality attributes:
 - **User-visible boundary adaptation** — isolate translation of backend/API/domain errors,
   validation results, empty data, loading state, and integration failures into safe
   human-readable UI or API-facing messages at a single clear boundary.
+- **Mock before commitment when requested** — if the spec records `UI Mock Preference:
+  Required`, create or update a mock UI companion before downstream planning or production
+  UI implementation. Treat user approval of that mock as a hard gate.
 - **Diagnostic signal without leakage** — design logs, metrics, traces, audit records, and
   support IDs so humans and agents can debug and operate the system without exposing
   secrets, regulated data, stack traces, or unstable internals.
@@ -180,6 +183,14 @@ producer/consumer payloads for success and error cases unless the boundary is ex
 out of scope. Prefer shared fixtures, generated schemas/clients, OpenAPI/AsyncAPI examples,
 consumer-driven contract tests, or integration tests over hand-written mocks that invent a
 different shape.
+
+For UI-facing products where the spec says `UI Mock Preference: Required`, create or update
+a mock UI companion such as `mock-ui.html` unless the repo already has an established mock
+location. The mock should show representative screens, navigation, major states, empty/
+loading/error/validation states, key copy, and responsive considerations at the fidelity the
+user requested. This mock is not production code and should avoid backend behavior. After
+creating or materially revising it, stop for human approval before `/plan-create` or
+production UI implementation.
 
 ## Work scope, design depth, and readiness
 
@@ -353,6 +364,9 @@ Candidate design contents:
 - **Presentation approach**: global stylesheet, design tokens, component library, utility
   CSS, or native platform conventions; layout grid/spacing/typography strategy; responsive
   breakpoints; and what styling is deliberately out of scope.
+- **Mock UI artifact**: when required by the spec, `mock-ui.html` or the established mock
+  artifact showing representative pages, key states, navigation, copy, and responsive
+  behavior for user approval.
 - **Error normalization boundary**: where backend/domain/network/validation error shapes
   are mapped into safe human-readable display messages, how multi-field validation errors
   are attributed, and which raw details are logged vs. shown.
@@ -374,8 +388,9 @@ Candidate design contents:
 
 Minimum web frontend artifacts: route map, component hierarchy diagram, UX flow diagram,
 state model/table, data/API contract table, loading/error/empty state matrix, accessibility
-checklist, responsive behavior matrix, presentation approach, error-normalization boundary,
-build/release notes, documentation notes, and test traceability matrix.
+checklist, responsive behavior matrix, presentation approach, mock UI artifact when required,
+error-normalization boundary, build/release notes, documentation notes, and test traceability
+matrix.
 
 ### Mobile app design
 
@@ -413,8 +428,8 @@ Candidate design contents:
 
 Minimum mobile artifacts: core/adapters component diagram, navigation graph, screen/state
 table, offline/sync diagram when remote data exists, permission/capability matrix,
-lifecycle/background table, performance budget, build/release plan, documentation plan, and
-test strategy matrix.
+lifecycle/background table, performance budget, mock UI artifact when required,
+build/release plan, documentation plan, and test strategy matrix.
 
 ### OO / UML-heavy design
 
@@ -464,6 +479,8 @@ Interview the user **one question at a time**: ask, wait, then ask the next. Cov
 - **Design profile**: backend/API/service, web frontend, mobile app, desktop, library/SDK,
   data/ML pipeline, infrastructure, OO/UML-heavy component, or mixed system. Select the
   profile-specific artifacts that apply.
+- **Mock UI gate**: For UI-facing work, does the spec require a mock UI? If yes, confirm the
+  fidelity, screens, states, flows, and approval owner before finalizing downstream design.
 - **Work scope and readiness**: Is this product/system HLD, feature/component design, or
   slice/change LLD? Is it Exploratory, Decomposable, or Code-ready?
 - **Context and boundaries**: system scope, external actors/systems, trust boundaries,
@@ -531,8 +548,8 @@ Use **prefix + slug**, no numeric suffix:
    hosting, or organizational constraints where they matter.
 3. **Drivers & Constraints** — the FRs/NFRs/use cases, quality-attribute scenarios,
    stakeholder concerns, logging/telemetry/error-handling constraints, build/release/
-   deployment constraints, documentation constraints, external constraints, risks, and
-   assumptions that shape the design.
+   deployment constraints, documentation constraints, UI mock preference/approval status,
+   external constraints, risks, and assumptions that shape the design.
 4. **Layers** — (`LAYER-<SLUG>`); each names its responsibility, allowed dependencies,
    boundary rules, ownership, and whether it belongs to core policy, application orchestration,
    adapter/shell, presentation, data, or infrastructure. Dependencies should be acyclic and justified.
@@ -591,6 +608,13 @@ for easy reading: include each Mermaid diagram in a `<pre class="mermaid">` bloc
 Mermaid from a CDN, with the same section order and ID-keyed tables. Keep both files in
 sync; never put IDs only in the HTML.
 
+If the work is UI-facing and the spec records `UI Mock Preference: Required`, also emit
+`mock-ui.html` or update the repo's established mock UI artifact. Include enough static or
+lightweight interactive UI to let the user review major screens, navigation, states,
+copy/content, error/empty/loading behavior, and responsive behavior. Do not continue to
+`/plan-create`, `/code-create`, or production UI implementation until the user explicitly
+approves the mock UI.
+
 ## Step 5 — Verify before finishing
 
 First run the deterministic structural checker and fix the document until it passes:
@@ -641,6 +665,9 @@ Pass-with-fixes.
   risks or rejected.
 - UI-facing designs define a presentation approach and readable loading/empty/error/
   validation states, or explicitly record them as out of scope.
+- UI-facing designs honor the spec's UI mock preference. If `UI Mock Preference: Required`,
+  `mock-ui.html` or the established mock artifact exists, is referenced from the design, and
+  awaits or records explicit user approval before downstream implementation.
 - Every diagram uses IDs as node/entity labels so it maps back to the spec and tables.
 - Record important alternatives, trade-offs, assumptions, risks, and technical debt. No vague verbs, no "etc.".
 - Create/update ADRs for material decisions and keep ADRs synchronized with `DEC-` entries.
@@ -656,6 +683,7 @@ Do not start `/plan-create`, `/code-create`, or any downstream artifact in the s
 End with a human-review handoff that includes:
 
 - Design path(s), including ADR paths if created or updated.
+- Mock UI path and approval status when a UI mock was required or produced.
 - Work Scope, Design Depth, and Implementation Readiness.
 - checker/assessment result.
 - Key decisions, assumptions, open questions, and risks.

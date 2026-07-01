@@ -54,8 +54,9 @@ Then read enough of `spec.md` and `design.md` to detect latent upstream issues e
 the plan, including ambiguous or conflicting requirements, missing acceptance criteria,
 unmeasurable NFRs, component boundaries that do not realize requirements, missing interfaces,
 untestable design choices, unresolved dependencies, unclear migration/rollout constraints,
-missing logging/error-handling strategy, missing build/release/deployment strategy, missing
-documentation strategy, or scope that cannot be sliced into reviewable PRs.
+missing UI mock approval when the spec/design requires one, missing logging/error-handling
+strategy, missing build/release/deployment strategy, missing documentation strategy, or
+scope that cannot be sliced into reviewable PRs.
 
 If either upstream checker fails, or if plan assessment reveals that the spec or design must
 change before the plan can be judged fairly, **stop the plan assessment**. Report an
@@ -138,6 +139,8 @@ Reasoned judgment, scored 1–5 with one concrete fix each:
 - **UX/presentation allocation** — UI-facing PRs assign baseline styling/layout,
   responsive/accessibility checks, and readable loading/empty/error/validation states, or
   explicitly justify why they are out of scope.
+- **Mock UI approval** — if the spec/design requires a mock UI, UI-facing PRs reference the
+  approved mock artifact and remain blocked until user approval is explicit.
 - **Logging/error-handling allocation** — PRs assign structured logs, telemetry events,
   metrics, traces, audit/support IDs, correlation propagation, redaction, alert hooks,
   representative failure-path tests, error mapping, retry/fallback/degraded behavior, and

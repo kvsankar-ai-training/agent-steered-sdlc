@@ -199,6 +199,10 @@ the next PR (lowest number, deps merged, not yet built). State the PR, its Red t
 scope, Planned Touch Set, the COMP/FR/AT/TEST it covers, the planned test levels, the
 verification oracle for each planned test, any likely supplemental inner-test discovery
 areas, and the quality-gate command(s) that must pass at the PR boundary. Also state any
+mock UI dependency and approval status for UI-facing work. If the spec/design/plan requires
+a mock UI and approval is missing, **stop before editing production UI code** and ask for
+human mock approval.
+Also state any
 planned logging/telemetry work: structured fields, events, metrics, traces, correlation/
 support IDs, redaction, alert hooks, or `None` with the plan's rationale. State planned
 error-handling work: UI/API/domain/integration/infrastructure mapping, retry/fallback/
@@ -380,6 +384,8 @@ first completed PR boundary.
   truth and do not drift into bespoke mock shapes.
 - UI-facing implementation includes the planned presentation/layout/responsive/accessibility
   and readable state work without making behavior tests brittle.
+- UI-facing implementation follows the approved mock UI when one is required; if the mock is
+  missing or unapproved, production UI work blocks at the human gate.
 - Each PR implements the logging/telemetry and error-handling work assigned in the plan,
   verifies stable structured signals and failure behavior, and avoids leaking secrets,
   stack traces, raw objects, or unstable internals to users, logs, telemetry, or agents.

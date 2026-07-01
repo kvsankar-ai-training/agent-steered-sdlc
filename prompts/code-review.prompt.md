@@ -54,6 +54,9 @@ Score each item 1-5 and give one concrete fix for any score below 5:
 - UI quality and selector resilience: planned styling/layout/responsive/accessibility and
   readable loading/empty/error/validation states are present, while behavior tests remain
   role/text/semantic rather than CSS-coupled unless style itself is under test.
+- Mock UI fidelity: when a mock UI was required, production UI changes match the approved
+  mock's screens, states, flows, copy intent, and responsive expectations, or clearly record
+  an approved deviation.
 - Logging and telemetry fitness: planned structured logs, events, metrics, traces,
   audit/support IDs, correlation propagation, redaction, alert hooks, and human/agent
   debugging signals are implemented, tested, stable, and free of secrets or excessive noise.

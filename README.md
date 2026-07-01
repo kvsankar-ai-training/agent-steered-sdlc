@@ -230,6 +230,10 @@ Default behavior is human-gated:
 - If important input is missing, the agent asks one focused question at a time.
 - After an artifact is generated, materially revised, reviewed, or assessed, the agent stops
   for human review.
+- For UI-facing products, `/spec-create` asks whether a mock UI is required. If the spec
+  records `UI Mock Preference: Required`, the mock UI artifact is a hard human gate:
+  downstream planning, code, and production UI work must wait for explicit user approval of
+  the mock.
 - Downstream reviews stop when they discover upstream spec, design, or plan issues.
 
 The human review pause is a hard gate. A completed spec does not automatically flow into

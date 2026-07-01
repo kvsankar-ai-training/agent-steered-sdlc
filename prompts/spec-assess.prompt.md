@@ -112,6 +112,9 @@ Reasoned judgment, scored 1–5 with one concrete fix each:
 - **UX/presentation quality** — UI-facing work captures baseline styling/layout,
   responsive behavior, accessibility, and readable loading/empty/error/validation states as
   measurable requirements or explicitly scopes them out.
+- **Mock UI preference** — UI-facing specs record whether a mock UI is Required, Optional,
+  Not needed, or Deferred. If Required, the spec includes a hard human approval gate before
+  production UI implementation.
 - **Boundary contract quality** — externally visible APIs/events/files/SDKs/CLIs/webhooks
   define success and error shapes that consumers rely on, including validation vs. domain
   error variants when relevant.
