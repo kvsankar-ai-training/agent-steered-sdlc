@@ -1,5 +1,5 @@
 ---
-description: Assess a Software Requirements Specification with a deterministic mechanical pass and a qualitative pass grounded in stakeholder needs, use cases, supplementary requirements, documentation/build/deploy needs, scope, and traceability.
+description: Assess a Software Requirements Specification with a deterministic mechanical pass and a qualitative pass grounded in stakeholder needs, use cases, supplementary requirements, logging/error-handling, documentation/build/deploy needs, scope, and traceability.
 agent: agent
 ---
 
@@ -92,26 +92,35 @@ Reasoned judgment, scored 1–5 with one concrete fix each:
   marked Code-ready.
 - **Scope-specific content completeness** — product/system specs carry mission,
   stakeholders, boundaries, product needs, non-goals, capabilities, representative use
-  cases, major NFRs, build/release/deployment expectations, broad acceptance intent, and
-  user/developer documentation expectations, and child-artifact needs; feature/component
-  specs carry parent references, local behavior, FR/NFR/AT coverage, dependencies, edge
-  cases, build/deployment constraints, documentation constraints, and non-goals;
+  cases, major NFRs, logging/telemetry and error-handling expectations,
+  build/release/deployment expectations, broad acceptance intent, user/developer
+  documentation expectations, and child-artifact needs; feature/component specs carry
+  parent references, local behavior, FR/NFR/AT coverage, dependencies, edge cases,
+  logging/error-handling constraints, build/deployment constraints, documentation
+  constraints, and non-goals;
   slice/change specs carry the exact requirement delta, parent IDs, changed/unchanged
-  behavior, build/deployment and documentation deltas when relevant, and code-ready
-  acceptance criteria.
+  behavior, logging/error-handling, build/deployment, and documentation deltas when
+  relevant, and code-ready acceptance criteria.
 - **Use-case quality** — actors, goals, preconditions, main flow, alternatives/exceptions,
   postconditions, and actor value are complete and behavior-focused.
 - **Requirement quality** — FRs are necessary, atomic, feasible, verifiable, unambiguous,
   design-free, and use "shall" consistently.
 - **Supplementary/NFR coverage** — performance, security, privacy, reliability, usability,
-  accessibility, interoperability, compliance, data, platform, build/release/deployment, and
-  operational constraints are considered and measurable where applicable.
+  accessibility, interoperability, compliance, data, platform, logging/telemetry, error
+  handling, build/release/deployment, and operational constraints are considered and
+  measurable where applicable.
 - **UX/presentation quality** — UI-facing work captures baseline styling/layout,
   responsive behavior, accessibility, and readable loading/empty/error/validation states as
   measurable requirements or explicitly scopes them out.
 - **Boundary contract quality** — externally visible APIs/events/files/SDKs/CLIs/webhooks
   define success and error shapes that consumers rely on, including validation vs. domain
   error variants when relevant.
+- **Logging and telemetry acceptance** — externally relevant logs, events, metrics, traces,
+  audit records, support IDs, correlation IDs, retention, redaction, and debugging signals
+  are either expressed as requirements/acceptance criteria or explicitly scoped out.
+- **Error-handling acceptance** — UI, API, domain, integration, infrastructure, validation,
+  authorization, timeout, offline, and unexpected-failure behavior is either expressed as
+  requirements/acceptance criteria or explicitly scoped out.
 - **Release/deployment acceptance** — externally relevant artifact, environment, promotion,
   rollout, migration, rollback, smoke-check, operator-facing, or uptime constraints are
   either expressed as requirements/acceptance criteria or explicitly scoped out.

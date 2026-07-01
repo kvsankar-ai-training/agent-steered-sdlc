@@ -1,5 +1,5 @@
 ---
-description: Assess a Software Design Document with a deterministic mechanical pass and a qualitative pass against requirements, stakeholder concerns, quality attributes, architecture/documentation/build/deploy views, interfaces, decisions, risks, and testability.
+description: Assess a Software Design Document with a deterministic mechanical pass and a qualitative pass against requirements, stakeholder concerns, quality attributes, logging/error-handling, architecture/documentation/build/deploy views, interfaces, decisions, risks, and testability.
 agent: agent
 ---
 
@@ -36,11 +36,11 @@ quality attributes, and likely change scenarios.
 Also judge whether the design uses the right profile-specific artifacts. Backend/API/service
 designs should include context, service/container, component/module, API/event contract,
 data/state, runtime flow, build/release, deployment/operations, developer documentation,
-and test views. Web frontend designs should
+logging/telemetry, error-handling, and test views. Web frontend designs should
 include route/page structure, component hierarchy, UX interaction states, state management,
 data-fetch/API contracts, presentation approach, error-normalization boundaries,
-accessibility, responsive behavior, performance/security, build/release, user/developer
-documentation, and tests.
+accessibility, responsive behavior, logging/telemetry signals, performance/security,
+build/release, user/developer documentation, and tests.
 Mobile designs should include platform scope, navigation, screen contracts, state/data flow,
 offline/sync where applicable, permissions/capabilities, lifecycle/background behavior,
 performance/battery budgets, build/release, user/developer documentation,
@@ -75,9 +75,10 @@ with `python3`; if that is unavailable, retry with `uv run python`.
 
 Then read the spec enough to detect latent upstream issues exposed by the design, including
 ambiguous requirements, contradictory requirements, missing acceptance criteria, missing or
-unmeasurable NFRs, missing build/release/deployment requirements, missing documentation
-requirements, unclear actors/use cases, unresolved scope boundaries, or requirements that
-already dictate implementation without justification.
+unmeasurable NFRs, missing logging/telemetry/error-handling requirements, missing
+build/release/deployment requirements, missing documentation requirements, unclear
+actors/use cases, unresolved scope boundaries, or requirements that already dictate
+implementation without justification.
 
 If the spec checker fails, or if design review reveals that the spec must change before the
 design can be judged fairly, **stop the design assessment**. Report an **Upstream spec blocker**
@@ -133,8 +134,8 @@ Reasoned judgment, scored 1–5 with one concrete fix each:
 - **Context and scope** — system boundary, external systems, actors, trust boundaries,
   build/release boundary, deployment environment, and ownership are understandable before internals.
 - **Quality attribute design** — performance, availability, modifiability, security, privacy,
-  usability, accessibility, observability, deployability, interoperability, scalability, and
-  cost are addressed with concrete scenarios, tactics, or explicit trade-offs.
+  usability, accessibility, observability, diagnosability, deployability, interoperability,
+  scalability, and cost are addressed with concrete scenarios, tactics, or explicit trade-offs.
 - **Architecture views** — static structure, runtime behavior, data, build/release,
   deployment/operations, documentation, and cross-cutting concepts are documented at the
   right level of detail.
@@ -147,12 +148,14 @@ Reasoned judgment, scored 1–5 with one concrete fix each:
   be marked Code-ready.
 - **Scope-specific content completeness** — product/system HLDs carry context, major
   containers/services/modules, drivers, boundaries, data ownership, quality tactics,
-  build/package/release strategy, deployment/operations strategy, ADRs, risks,
-  documentation strategy, decomposition candidates, and system test strategy;
+  logging/telemetry strategy, error-handling strategy, build/package/release strategy,
+  deployment/operations strategy, ADRs, risks, documentation strategy, decomposition
+  candidates, and system test strategy;
   feature/component designs carry responsibilities, contracts, local state, flows,
-  core/shell partition, dependencies, build/deployment impacts, documentation impacts,
-  decisions, risks, and test matrix; slice/change LLDs carry exact local changes,
-  API/schema/data deltas, failure paths, validation/policy logic, build/deployment script or
+  core/shell partition, dependencies, logging/error-handling impacts, build/deployment
+  impacts, documentation impacts, decisions, risks, and test matrix; slice/change LLDs carry
+  exact local changes, API/schema/data deltas, failure paths, validation/policy logic,
+  logging/telemetry deltas, error mapping/recovery paths, build/deployment script or
   artifact changes, documentation changes, migration/rollback, side effects, test
   doubles/levels, and likely touch candidates.
 - **Cohesion and coupling** — components have focused responsibilities, stable interfaces,
@@ -163,6 +166,12 @@ Reasoned judgment, scored 1–5 with one concrete fix each:
 - **Interfaces and contracts** — APIs/events/schemas/protocols define ownership, inputs,
   outputs, errors, auth/trust, compatibility, quality expectations, representative payload
   variants, and the fixture/schema/generated-client source tests should use.
+- **Logging and telemetry design** — structured logs, events, metrics, traces, audit/support
+  IDs, correlation, sinks, retention/sampling, redaction/privacy, alert hooks, and
+  human/agent consumers are explicit and compatible with the requirements.
+- **Error-handling design** — UI, API, domain, integration, infrastructure, validation,
+  authorization, timeout, offline, and unexpected-failure categories have clear mapping
+  boundaries, retry/fallback/degraded behavior, escalation, and safe user/API messages.
 - **Contract realism** — boundary-facing tests and client/server adapters are grounded in
   documented producer/consumer contracts, shared fixtures, schemas, generated clients, or
   contract tests rather than ad-hoc mock shapes.
@@ -174,7 +183,8 @@ Reasoned judgment, scored 1–5 with one concrete fix each:
 - **Functional core / imperative shell** — pure decision logic, rules, validation, state
   transitions, calculations, reducers, mappers, and invariants are separated from I/O,
   persistence, UI/navigation, framework glue, network/device/browser APIs, time, randomness,
-  messaging, retries, analytics, and observability, with test strategy matching each side.
+  messaging, retries, analytics, logging, telemetry, and observability, with test strategy
+  matching each side.
   If the design uses an equivalent separation or says the split is not applicable, the
   explanation is specific, justified by the architecture style, and still protects testability.
 - **Testability and operability** — explicit `TEST-` obligations make components and

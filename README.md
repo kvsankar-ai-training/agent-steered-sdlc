@@ -8,7 +8,7 @@ traceability or skipping human review.
 The workflow is intentionally artifact-driven:
 
 ```text
-request -> spec -> design -> plan -> code/tests/docs/build/deploy -> assess
+request -> spec -> design -> plan -> code/tests/logging/errors/docs/build/deploy -> assess
 ```
 
 Each stage can be created, verified, reviewed, or assessed independently. By default, the
@@ -123,9 +123,9 @@ The core stage names are:
 | `/plan-verify` | Run upstream artifact and plan structural checks. |
 | `/plan-review` | Qualitatively review plan readiness, slicing, allocation, and sequencing. |
 | `/plan-assess` | Run `/plan-verify` plus `/plan-review`. |
-| `/code-create` | Implement a code-ready plan using Red/Green/Refactor TDD, including planned docs/build/deploy work. |
-| `/code-verify` | Run tests, coverage, quality gates, build/docs/deployment checks, and structural code evidence. |
-| `/code-review` | Qualitatively review code, tests, docs, build/deploy work, quality gates, and upstream consistency. |
+| `/code-create` | Implement a code-ready plan using Red/Green/Refactor TDD, including planned logging/error-handling/docs/build/deploy work. |
+| `/code-verify` | Run tests, coverage, quality gates, logging/error-handling/build/docs/deployment checks, and structural code evidence. |
+| `/code-review` | Qualitatively review code, tests, logging/error-handling, docs, build/deploy work, quality gates, and upstream consistency. |
 | `/code-assess` | Run `/code-verify` plus `/code-review`. |
 
 Exact invocation syntax depends on the host tool:
@@ -205,6 +205,24 @@ Documentation is also covered from the beginning:
 Reviews stop with an upstream blocker when documentation intent is missing from the artifact
 that should own it.
 
+## Logging, Telemetry, And Error Handling
+
+Diagnostics and failure behavior are covered across the lifecycle:
+
+- Specs capture externally relevant human/agent/operator diagnostics, telemetry,
+  support/debugging needs, privacy/redaction constraints, user-facing error behavior, and
+  boundary error contracts as requirements or non-goals.
+- Designs define structured logging, correlation IDs, events, metrics, traces, sinks,
+  retention/redaction, alert hooks, and how UI/API/domain/infrastructure errors are mapped,
+  recovered, retried, degraded, or surfaced.
+- Plans assign logging, telemetry, and error-handling work to PRs, including fixtures,
+  verification oracles, and tests for representative success/failure paths.
+- Code implements and verifies the planned diagnostics and error handling without leaking
+  secrets, stack traces, raw objects, or unstable internals to users, logs, or agents.
+
+Reviews stop with an upstream blocker when logging, telemetry, or error-handling intent is
+missing from the artifact that should own it.
+
 ## Human Gates And YOLO Mode
 
 Default behavior is human-gated:
@@ -264,15 +282,17 @@ Test responsibility is split by artifact:
   artifact, structured log, metric, trace, deployment signal, or captured external call as
   appropriate.
 - Defect remediation updates upstream artifacts first when the defect reveals missing UX
-  quality, unclear boundary contracts, unrealistic mocks, or other latent spec/design/plan
-  gaps.
-- Documentation, build, and deployment checks are assigned through the same spec/design/plan
-  chain and verified during code creation, `/code-verify`, or `/code-assess` when planned.
+  quality, unclear boundary contracts, missing logging/telemetry/error-handling intent,
+  unrealistic mocks, or other latent spec/design/plan gaps.
+- Documentation, logging/telemetry, error-handling, build, and deployment checks are
+  assigned through the same spec/design/plan chain and verified during code creation,
+  `/code-verify`, or `/code-assess` when planned.
 
 Use `/code-verify` when you simply want a confidence run after a change: test suite,
-coverage, pre-commit/equivalent gates, build checks, documentation checks, deployment
-dry-runs or smoke checks where planned, and `check_code.py`. Use `/code-review` when you
-want qualitative judgment. Use `/code-assess` when you want both in one gate.
+coverage, pre-commit/equivalent gates, logging/error-handling checks, build checks,
+documentation checks, deployment dry-runs or smoke checks where planned, and `check_code.py`.
+Use `/code-review` when you want qualitative judgment. Use `/code-assess` when you want both
+in one gate.
 
 The checkers provide deterministic structural evidence:
 
@@ -287,7 +307,8 @@ If `python` is unavailable, try `python3`, then `uv run python`.
 
 The checkers do not prove semantic correctness. Assessment commands pair verification
 evidence with qualitative review of requirements, design, plan quality, test implementation
-quality, verification-oracle rigor, implementation fitness, documentation/build/deployment
+quality, verification-oracle rigor, implementation fitness, logging/error-handling,
+documentation/build/deployment
 completeness, and upstream/downstream consistency.
 
 ## Repository Layout

@@ -1,5 +1,5 @@
 ---
-description: Interview the user, then author a high-quality Software Requirements Specification grounded in stakeholder needs, use cases, supplementary requirements, documentation/build/deploy needs, scope, and traceability.
+description: Interview the user, then author a high-quality Software Requirements Specification grounded in stakeholder needs, use cases, supplementary requirements, logging/error-handling, documentation/build/deploy needs, scope, and traceability.
 agent: agent
 ---
 
@@ -27,9 +27,9 @@ management and the requirements pyramid:
   success flow, alternatives/exceptions, and postconditions. They should describe observable
   interactions and value, not internal design.
 - **Supplementary requirements for qualities and constraints** — performance, security,
-  reliability, usability, interoperability, compliance, data retention, build/release,
-  deployment, operability, and other cross-cutting constraints belong in measurable NFRs
-  unless they are specific to one use case.
+  reliability, usability, interoperability, compliance, data retention, logging, telemetry,
+  error handling, build/release, deployment, operability, and other cross-cutting constraints
+  belong in measurable NFRs unless they are specific to one use case.
 - **Documentation is a requirement when people depend on it** — user guidance, onboarding,
   help content, API/developer docs, examples, runbooks, troubleshooting, migration notes,
   and release notes belong in the spec when they affect adoption, safe use, support,
@@ -116,6 +116,26 @@ when users, developers, operators, support, auditors, or integrators need it to 
 If user or developer documentation is intentionally out of scope, record that in
 **Non-Goals** or **Assumptions & Open Questions** rather than leaving it implicit.
 
+## Logging, telemetry, and error handling responsibility in this command
+
+`/spec-create` captures externally relevant diagnostics and failure behavior as
+requirements, but does not choose logging libraries or implementation mechanics. Treat these
+as requirements when humans, agents, operators, support teams, auditors, or downstream
+systems depend on them:
+
+- Product/system specs state diagnostic audiences, high-level telemetry/observability
+  goals, support/debugging expectations, privacy/redaction constraints, error categories,
+  user-facing error behavior, and operational acceptance signals.
+- Feature/component specs state feature-specific events, metrics, traces, correlation needs,
+  log/audit expectations, fallback/degraded behavior, retry/recovery expectations, and
+  human-readable error behavior.
+- Slice/change specs state the exact logging/telemetry/error-handling delta: new or changed
+  events/fields, redaction rules, correlation propagation, error mapping, retry/fallback
+  behavior, user/API messages, and acceptance criteria or justified non-code verification.
+
+If logging, telemetry, or error handling is intentionally out of scope, record that in
+**Non-Goals** or **Assumptions & Open Questions** rather than leaving it implicit.
+
 ## User experience and boundary contract responsibility in this command
 
 For products with a user interface or external integration boundary, capture user-visible
@@ -130,6 +150,9 @@ state the externally observable quality bar:
 - **Human-readable feedback**: validation, domain, authorization, connectivity, and
   unexpected failures shall surface useful, safe, user-understandable text without leaking
   raw objects, stack traces, or implementation internals.
+- **Diagnostics for humans and agents**: logs, telemetry events, metrics, traces, audit
+  records, and support IDs should be useful for debugging, support, operations, and agentic
+  follow-up while avoiding sensitive data, secrets, and unstable implementation details.
 - **Boundary contracts**: public APIs, events, files, CLI outputs, webhooks, SDK calls, and
   generated clients shall define externally visible success and error shapes when consumers
   depend on them. Include known variant shapes, such as validation errors vs. domain errors,
@@ -199,21 +222,23 @@ Use the same section order for every spec, but tune the content to the declared 
 
 - **Product/system spec** carries the product mission, stakeholders, system boundary,
   product-level needs, non-goals, major capabilities/features, representative use cases,
-  major NFRs and external constraints, build/release/deployment expectations,
-  user/developer documentation expectations, broad acceptance intent, assumptions, risks,
-  and a traceability map from needs to capabilities. It should usually be Exploratory or
-  Decomposable and should identify child feature/component specs needed next.
+  major NFRs and external constraints, logging/telemetry and error-handling expectations,
+  build/release/deployment expectations, user/developer documentation expectations, broad
+  acceptance intent, assumptions, risks, and a traceability map from needs to capabilities.
+  It should usually be Exploratory or Decomposable and should identify child
+  feature/component specs needed next.
 - **Feature/component spec** carries the parent product references, feature/component goal,
   actors and users, concrete behavior/use cases, FRs/NFRs local to the feature/component,
-  edge cases, integration or business rules, build/release/deployment constraints,
-  documentation constraints, acceptance criteria, dependencies, non-goals, and traceability
-  back to parent needs/features. It may be Decomposable or Code-ready depending on size and
-  precision.
+  edge cases, integration or business rules, logging/telemetry and error-handling
+  constraints, build/release/deployment constraints, documentation constraints, acceptance
+  criteria, dependencies, non-goals, and traceability back to parent needs/features. It may
+  be Decomposable or Code-ready depending on size and precision.
 - **Slice/change spec** carries the precise requirement delta for one implementable change,
   parent IDs being refined or preserved, exact behavior and edge cases, changed FR/NFR/AT
-  items, build/release/deployment deltas and documentation deltas when relevant, externally
-  visible acceptance criteria or justified non-code verification, and explicitly unchanged
-  behavior. It should normally be Code-ready before planning/code.
+  items, logging/error-handling deltas, build/release/deployment deltas and documentation
+  deltas when relevant, externally visible acceptance criteria or justified non-code
+  verification, and explicitly unchanged behavior. It should normally be Code-ready before
+  planning/code.
 
 ## Research and source grounding
 
@@ -283,13 +308,20 @@ answer, then ask the next. Never batch questions. Keep going until gaps close. C
 - **Use cases and scenarios**: What actor-goal flows, alternate paths, errors, and edge cases
   must be supported?
 - **Supplementary/NFR constraints**: Performance, security, privacy, reliability, usability,
-  accessibility, interoperability, compliance, data, platform, operational, and budget limits.
+  accessibility, interoperability, compliance, data, platform, logging/telemetry,
+  error handling, operational, and budget limits.
 - **User experience quality**: For UI-facing work, what baseline styling, layout,
   responsiveness, loading/empty/error states, accessibility, and human-readable feedback are
   expected? What is explicitly out of scope?
 - **External contract expectations**: Which API/event/file/SDK/CLI/webhook success and
   error shapes are externally visible or consumed across a boundary? Which variants must be
   human-readable or contract-tested?
+- **Logging, telemetry, and diagnostics**: What events, metrics, traces, audit records,
+  support IDs, correlation IDs, retention/redaction rules, and agent/human debugging signals
+  are required or explicitly out of scope?
+- **Error handling and recovery**: Which UI, API, domain, integration, infrastructure,
+  validation, authorization, timeout, offline, and unexpected-failure cases need user-facing
+  messages, retries, fallback/degraded behavior, escalation, or auditability?
 - **Build, release, and deployment needs**: What deployable artifact is expected; where it
   runs; how environments, promotion, rollout, rollback, migrations, approvals, smoke checks,
   and operator/user-visible release behavior should work; and which of those are in scope now.
@@ -339,8 +371,8 @@ Use **descriptive slug-only IDs**. Do not use numeric suffixes.
 7. **Non-Functional Requirements** — list (`NFR-<AREA>-<NAME>`), measurable supplementary
    requirements and external constraints with thresholds, units, scope, and verification
    method, including usability/presentation, human-readable feedback, boundary contract,
-   build/release/deployment, documentation, and operational constraints when externally
-   relevant.
+   logging/telemetry, error handling, build/release/deployment, documentation, and
+   operational constraints when externally relevant.
 8. **Acceptance Tests** — list (`AT-<AREA>-<NAME>`), Given/When/Then or equivalent
    black-box acceptance criteria; each maps to a `UC-` and the `FR-`/`NFR-` it verifies.
    State the externally visible behavior or measurable quality to verify, not the internal
@@ -371,6 +403,12 @@ Use **descriptive slug-only IDs**. Do not use numeric suffixes.
 - External boundary contracts, including success/error body shapes that consumers depend on,
   are captured as requirements/acceptance criteria or explicitly deferred as non-goals/open
   questions.
+- Logging, telemetry, diagnostic, and support/debugging expectations are either captured as
+  measurable requirements/acceptance criteria or explicitly deferred as non-goals/open
+  questions.
+- Error-handling expectations across UI, API, domain, integration, infrastructure, and
+  unexpected-failure levels are captured as requirements/acceptance criteria or explicitly
+  deferred as non-goals/open questions.
 - Avoid "etc.", "and/or", "TBD", "as appropriate", vague adjectives, hidden design decisions,
   unowned assumptions, and requirements that bundle multiple obligations.
 

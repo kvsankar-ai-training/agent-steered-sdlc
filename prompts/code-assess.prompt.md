@@ -1,5 +1,5 @@
 ---
-description: Assess implemented code/docs/build/deploy work against its plan with upstream checks, structural code gates, pre-commit/local quality gates, and a qualitative pass.
+description: Assess implemented code/logging/error-handling/docs/build/deploy work against its plan with upstream checks, structural code gates, pre-commit/local quality gates, and a qualitative pass.
 agent: agent
 ---
 
@@ -25,7 +25,8 @@ When the platform supports sub-agents, run these as two fresh-context passes:
   failures.
 - **Qualitative Reviewer sub-agent**: read the code, upstream artifacts, and mechanical
   evidence, then judge upstream fitness, implementation quality, test implementation
-  quality, TDD evidence, scope fidelity, and quality-gate fitness adversarially.
+  quality, logging/telemetry and error-handling fitness, TDD evidence, scope fidelity, and
+  quality-gate fitness adversarially.
 
 If sub-agents are unavailable, state that limitation and keep the mechanical and qualitative
 sections separate.
@@ -53,9 +54,10 @@ with `python3`; if that is unavailable, retry with `uv run python`.
 Then read enough of the upstream artifacts to detect latent issues exposed by the code,
 including ambiguous requirements, missing acceptance criteria, untestable design choices,
 incorrect component boundaries, plan slices that cannot be built independently, missing NFR
-validation, missing build/release/deployment intent, missing/incorrect Planned Touch Sets,
-missing user/developer documentation intent, traceability gaps, or implementation behavior
-that suggests the upstream artifact specified the wrong thing.
+validation, missing logging/telemetry/error-handling intent, missing build/release/
+deployment intent, missing/incorrect Planned Touch Sets, missing user/developer
+documentation intent, traceability gaps, or implementation behavior that suggests the
+upstream artifact specified the wrong thing.
 
 Also verify the upstream artifacts were code-ready for this implementation. If `spec.md`,
 `design.md`, or `plan.md` declares Exploratory or Decomposable readiness, or if `plan.md`
@@ -217,6 +219,14 @@ Reasoned judgment, scored 1–5 with one concrete fix each:
   and readable loading/empty/error/validation states are implemented; behavior tests use
   role/text/semantic selectors rather than CSS classes unless style is the contract under
   test.
+- **Logging and telemetry fitness** — planned structured logs, events, metrics, traces,
+  audit/support IDs, correlation propagation, redaction, alert hooks, and human/agent
+  debugging signals are implemented, tested, stable, useful, and free of secrets or
+  excessive noise.
+- **Error-handling fitness** — UI, API, domain, integration, infrastructure, validation,
+  authorization, timeout, offline, and unexpected failures map to safe messages, typed/
+  documented errors, retries/fallback/degraded behavior, escalation, and logs/telemetry at
+  the right boundary.
 - **Build/deployment completeness** — assigned build/package work produces or validates the
   expected artifact; deployment scripts, manifests, IaC, migrations, smoke checks, rollback
   checks, and release docs are implemented and verified where planned.
@@ -231,9 +241,9 @@ Reasoned judgment, scored 1–5 with one concrete fix each:
 - **Readability** — plain test names (IDs in docstrings, not crammed into names), clear
   structure, no dead code. Test helpers and fixtures should reduce drift and duplication
   without obscuring the behavior being asserted.
-- **Production quality** — error handling, validation, NFRs met, artifacts are reproducible,
-  config/secrets are handled safely, documentation matches behavior, and deployment/rollback
-  behavior is credible.
+- **Production quality** — error handling, validation, logging/telemetry, NFRs met,
+  artifacts are reproducible, config/secrets are handled safely, documentation matches
+  behavior, and deployment/rollback behavior is credible.
 - **Quality gate fitness** — pre-commit/equivalent gates are language-appropriate,
   enforce thresholds, are not trivially bypassed, and align with CI.
 

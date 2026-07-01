@@ -15,8 +15,8 @@ explicitly asked.
 
 Before judging the plan itself, check whether the upstream spec and design are fit to plan
 from. If requirements, acceptance criteria, component boundaries, interfaces, dependencies,
-build/deployment strategy, documentation strategy, or slicing constraints are defective,
-stop with an upstream blocker.
+logging/error-handling strategy, build/deployment strategy, documentation strategy, or
+slicing constraints are defective, stop with an upstream blocker.
 
 Use an adversarial posture: try to refute the slicing, find missing upstream changes,
 oversized PRs, fake TDD steps, unsafe parallelism, touch-set drift, dependency traps, and
@@ -51,6 +51,9 @@ Score each item 1-5 and give one concrete fix for any score below 5:
 - UX/presentation allocation: UI-facing PRs assign baseline styling/layout,
   responsive/accessibility checks, and readable loading/empty/error/validation states, or
   explicitly scope them out.
+- Logging/error-handling allocation: PRs assign structured logs, telemetry, correlation/
+  support IDs, redaction, alert hooks, representative failure-path tests, error mapping,
+  retry/fallback/degraded behavior, and safe UI/API messages where required.
 - Build/deployment allocation: package, artifact, release, migration, deployment dry-run,
   smoke, and rollback work is assigned where relevant.
 - Documentation allocation: user/developer docs, generated/reference docs, examples,

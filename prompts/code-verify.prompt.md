@@ -1,15 +1,15 @@
 ---
-description: Run code verification gates, tests, quality checks, build/docs/deployment checks, and structural code evidence without qualitative review.
+description: Run code verification gates, tests, quality checks, logging/error-handling checks, build/docs/deployment checks, and structural code evidence without qualitative review.
 agent: agent
 ---
 
 # Code Verify
 
 Run verification gates for implemented code. This command is the confidence-run command:
-tests, coverage, pre-commit/equivalent quality gates, build/docs/deployment checks where
-planned, upstream structural checks, and `check_code.py`. It collects evidence only; it
-does not perform a qualitative code review. Use `/code-review` for judgment and
-`/code-assess` for verify + review.
+tests, coverage, pre-commit/equivalent quality gates, logging/error-handling checks,
+build/docs/deployment checks where planned, upstream structural checks, and `check_code.py`.
+It collects evidence only; it does not perform a qualitative code review. Use `/code-review`
+for judgment and `/code-assess` for verify + review.
 
 Do not edit code unless explicitly asked.
 
@@ -67,10 +67,15 @@ uv run pre-commit run --all-files
 If the project uses another documented equivalent, run that command instead. Report the
 command, tools covered, thresholds, and pass/fail.
 
-## Build, Documentation, And Deployment Verification
+## Logging, Error, Build, Documentation, And Deployment Verification
 
 Run planned commands where present:
 
+- Logging/telemetry checks for structured events, metrics, traces, audit/support IDs,
+  correlation propagation, redaction, alert hooks, and absence of sensitive data.
+- Error-handling checks for UI/API/domain/integration/infrastructure error mapping,
+  retry/fallback/degraded behavior, safe user/API messages, and representative failure
+  paths.
 - Build/package command and artifact existence/version check.
 - Documentation build/generation/link/example checks.
 - Deployment lint/dry-run/plan/template/smoke/rollback checks.

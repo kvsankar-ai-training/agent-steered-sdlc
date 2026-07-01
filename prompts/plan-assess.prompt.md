@@ -1,5 +1,5 @@
 ---
-description: Assess a Work Plan with a deterministic mechanical pass and a qualitative pass, checking PR size, TDD, docs/build/deploy allocation, and full spec/design coverage.
+description: Assess a Work Plan with a deterministic mechanical pass and a qualitative pass, checking PR size, TDD, logging/error-handling/docs/build/deploy allocation, and full spec/design coverage.
 agent: agent
 ---
 
@@ -54,8 +54,8 @@ Then read enough of `spec.md` and `design.md` to detect latent upstream issues e
 the plan, including ambiguous or conflicting requirements, missing acceptance criteria,
 unmeasurable NFRs, component boundaries that do not realize requirements, missing interfaces,
 untestable design choices, unresolved dependencies, unclear migration/rollout constraints,
-missing build/release/deployment strategy, missing documentation strategy, or scope that
-cannot be sliced into reviewable PRs.
+missing logging/error-handling strategy, missing build/release/deployment strategy, missing
+documentation strategy, or scope that cannot be sliced into reviewable PRs.
 
 If either upstream checker fails, or if plan assessment reveals that the spec or design must
 change before the plan can be judged fairly, **stop the plan assessment**. Report an
@@ -109,13 +109,14 @@ Reasoned judgment, scored 1–5 with one concrete fix each:
   Implementation plans with concrete `PR-` items may be Code-ready for `/code-create`.
 - **Scope-specific content completeness** — product/system plans carry milestones, child
   feature/component `WORK-` items, dependencies, required child specs/designs/ADRs, research
-  or decision needs, build/release/deployment tracks, documentation tracks, sequencing,
-  parallel tracks, risks, and readiness targets;
+  or decision needs, logging/error-handling tracks, build/release/deployment tracks,
+  documentation tracks, sequencing, parallel tracks, risks, and readiness targets;
   feature/component plans carry child slice/change work or code-ready PRs, child artifact
-  needs, integration order, test allocation, build/deployment impacts, documentation impacts,
-  and touch-scope risks; slice/change plans carry concrete `PR-` items, Planned Touch Sets,
-  Red/Green steps, test levels, LOC estimates, quality gates, build/deployment verification,
-  documentation updates/checks, rollback, dependencies, and worktree guidance.
+  needs, integration order, test allocation, logging/error-handling impacts,
+  build/deployment impacts, documentation impacts, and touch-scope risks; slice/change plans
+  carry concrete `PR-` items, Planned Touch Sets, Red/Green steps, test levels, LOC
+  estimates, quality gates, logging/error-handling verification, build/deployment
+  verification, documentation updates/checks, rollback, dependencies, and worktree guidance.
 - **TDD discipline** — planned Red steps precede Green steps and are meaningful, not coverage
   theater. The structural checker only verifies Red/Green step text; use judgment here.
 - **Coverage** — no requirement/component silently skipped; NFRs scheduled.
@@ -137,6 +138,10 @@ Reasoned judgment, scored 1–5 with one concrete fix each:
 - **UX/presentation allocation** — UI-facing PRs assign baseline styling/layout,
   responsive/accessibility checks, and readable loading/empty/error/validation states, or
   explicitly justify why they are out of scope.
+- **Logging/error-handling allocation** — PRs assign structured logs, telemetry events,
+  metrics, traces, audit/support IDs, correlation propagation, redaction, alert hooks,
+  representative failure-path tests, error mapping, retry/fallback/degraded behavior, and
+  safe UI/API messages where required.
 - **Build/deployment allocation** — artifact creation, packaging, generated outputs, CI/CD
   config, deployment scripts/manifests/IaC, migration validation, dry-run/plan/lint commands,
   smoke checks, rollback checks, and release docs are assigned to PRs when the upstream
@@ -154,7 +159,7 @@ Reasoned judgment, scored 1–5 with one concrete fix each:
 - **Parallelism and worktrees** — waves and critical path are correct; concurrent PRs avoid
   shared-file conflicts or identify them through touch-set overlaps; independent branches say
   whether separate Git worktrees are recommended and how they rejoin.
-- **Production quality** — error handling, NFR validation, rollback per PR.
+- **Production quality** — logging/telemetry, error handling, NFR validation, rollback per PR.
 - **Shippability** — the plan introduces build, deployment, and documentation capability
   before dependent feature work, keeps each PR independently buildable and explainable, and
   avoids late integration or documentation surprises.

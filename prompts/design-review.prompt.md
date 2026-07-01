@@ -14,9 +14,9 @@ Target the design file the user provides, defaulting to `design.md`. Do not edit
 explicitly asked.
 
 Before judging the design itself, check whether the upstream spec is fit to design from. If
-spec ambiguity, missing acceptance criteria, incorrect NFRs, missing build/deployment or
-documentation needs, or scope issues block fair design review, stop with an upstream spec
-blocker.
+spec ambiguity, missing acceptance criteria, incorrect NFRs, missing logging/error-handling
+intent, missing build/deployment or documentation needs, or scope issues block fair design
+review, stop with an upstream spec blocker.
 
 Use an adversarial posture: try to refute the design, find missing upstream changes,
 unowned interfaces, weak trade-offs, excessive coupling, testability gaps, and traceability
@@ -52,6 +52,12 @@ Score each item 1-5 and give one concrete fix for any score below 5:
 - Quality attributes: performance, security, privacy, reliability, accessibility,
   observability, operations, build/release/deployment, and documentation tactics fit the
   spec.
+- Logging and telemetry design: structured logs, events, metrics, traces, audit/support IDs,
+  correlation, sinks, retention/sampling, redaction/privacy, alert hooks, and human/agent
+  consumers are explicit where relevant.
+- Error-handling design: UI, API, domain, integration, infrastructure, validation,
+  authorization, timeout, offline, and unexpected-failure categories have clear mapping,
+  retry/fallback/degraded behavior, escalation, and safe user/API messages.
 - Trade-offs and ADRs: meaningful options, selected decisions, rejected alternatives, and
   consequences are surfaced and documented.
 - Testability: explicit `TEST-` obligations sensibly cover acceptance/e2e, unit/pure-core,

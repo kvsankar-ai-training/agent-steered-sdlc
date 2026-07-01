@@ -1,5 +1,5 @@
 ---
-description: Interview the user, then author a high-quality Software Design Document grounded in requirements, stakeholder concerns, quality attributes, architecture/documentation/build/deploy views, interfaces, decisions, risks, and testability.
+description: Interview the user, then author a high-quality Software Design Document grounded in requirements, stakeholder concerns, quality attributes, logging/error-handling, architecture/documentation/build/deploy views, interfaces, decisions, risks, and testability.
 agent: agent
 ---
 
@@ -33,18 +33,18 @@ such as arc42, C4-style views, and SEI quality-attribute/attribute-driven design
    I/O, persistence, messaging, framework glue, navigation, time, randomness, device APIs,
    network calls, analytics, notifications, and other effects. The core should be easy to
    test deterministically; the shell should be thin, explicit, observable, and contract-tested.
-7. **Interface-first collaboration** — APIs, events, schemas, protocols, and error contracts
-   are part of the design, not afterthoughts.
+7. **Interface-first collaboration** — APIs, events, schemas, protocols, error contracts,
+   and diagnostic contracts are part of the design, not afterthoughts.
 8. **Contract truth over convenient mocks** — tests and client adapters should use shared
    fixtures, generated clients, schemas, contract tests, or captured representative payloads
    from the documented boundary contract. Do not design tests around ad-hoc mock shapes that
    differ from the producer/consumer contract.
 9. **Data and lifecycle awareness** — model data ownership, identity, consistency, retention,
    migrations, privacy/security classification, and failure/recovery behavior where relevant.
-10. **Buildability, documentability, testability, and operability by design** — each
+10. **Buildability, documentability, diagnosability, testability, and operability by design** — each
    component should have an isolation strategy, contract/integration test approach,
-   build/package path, documentation owner and audience where relevant, observability hooks,
-   deployment checks, and operational checks.
+   build/package path, documentation owner and audience where relevant, structured
+   logging/telemetry hooks, deployment checks, and operational checks.
 11. **Decisions carry rationale and consequences** — record alternatives considered,
     why the chosen option fits now, rejected options, trade-offs, and expected change points.
 
@@ -119,6 +119,9 @@ design's ability to satisfy requirements and quality attributes:
 - **User-visible boundary adaptation** — isolate translation of backend/API/domain errors,
   validation results, empty data, loading state, and integration failures into safe
   human-readable UI or API-facing messages at a single clear boundary.
+- **Diagnostic signal without leakage** — design logs, metrics, traces, audit records, and
+  support IDs so humans and agents can debug and operate the system without exposing
+  secrets, regulated data, stack traces, or unstable internals.
 
 ## Test responsibility in this command
 
@@ -242,19 +245,21 @@ Use the same section order for every design, but tune the content to the declare
 
 - **Product/system design (HLD)** carries system context, major containers/services/modules,
   architectural drivers, key quality-attribute tactics, system and trust boundaries, major
-  data ownership, integration strategy, build/package/release strategy,
-  deployment/operations strategy, documentation strategy, material decisions/ADRs, risks,
-  decomposition candidates, and a system-level test strategy. It should explain how the
-  system will be divided, not specify every local algorithm or file.
+  data ownership, integration strategy, logging/telemetry strategy, error-handling strategy,
+  build/package/release strategy, deployment/operations strategy, documentation strategy,
+  material decisions/ADRs, risks, decomposition candidates, and a system-level test strategy.
+  It should explain how the system will be divided, not specify every local algorithm or file.
 - **Feature/component design** carries component responsibilities, interfaces/contracts,
   local data/state ownership, runtime flows, functional-core/imperative-shell partition,
-  dependencies, UX/API contracts, build/release/deployment impacts, feature-level
-  documentation impacts, decisions/ADRs, risks, and explicit `TEST-` obligations for that
-  feature/component. It should identify any child slice/change LLDs still required.
+  dependencies, UX/API contracts, logging/telemetry and error-handling impacts,
+  build/release/deployment impacts, feature-level documentation impacts, decisions/ADRs,
+  risks, and explicit `TEST-` obligations for that feature/component. It should identify
+  any child slice/change LLDs still required.
 - **Slice/change design (LLD)** carries the exact local design needed for implementation:
   touched components/modules, API/schema/data changes, detailed happy and failure flows,
-  validation/policy logic, core-vs-shell placement, migration/rollback concerns, side
-  effects, build/deployment script or artifact changes, documentation changes, planned test
+  validation/policy logic, core-vs-shell placement, logging/telemetry deltas,
+  error-handling and recovery paths, migration/rollback concerns, side effects,
+  build/deployment script or artifact changes, documentation changes, planned test
   levels/doubles, and likely file/module touch candidates.
 
 ## Design profiles and candidate sections
@@ -283,6 +288,12 @@ Every non-trivial design should include:
 - **Documentation view** — user docs, developer docs, API/reference docs, examples,
   tutorials, diagrams, runbooks, troubleshooting, doc generation, versioning, publishing
   path, ownership, and review/update triggers.
+- **Logging/telemetry view** — log/event/metric/trace/audit records, correlation IDs,
+  support/debug IDs, sinks, retention, sampling, redaction/privacy rules, alert hooks, and
+  how humans and agents consume the signals.
+- **Error-handling view** — UI/API/domain/integration/infrastructure error categories,
+  mapping boundaries, user-facing messages, retry/fallback/degraded behavior, escalation,
+  and safe failure defaults.
 - **Traceability and tests** — requirements to components/interfaces/decisions/tests.
 
 ### Backend / API / service design
@@ -469,14 +480,21 @@ Interview the user **one question at a time**: ask, wait, then ask the next. Cov
 - **User and developer documentation architecture**: doc audiences, information architecture,
   source locations, generated vs. hand-written docs, API/reference generation, examples,
   diagrams, publishing/versioning, ownership, review triggers, and doc validation checks.
+- **Logging, telemetry, and diagnostics architecture**: structured log fields, event names,
+  metrics, traces, audit records, correlation/support IDs, sinks, retention, sampling,
+  redaction/privacy rules, alert hooks, and how humans or agents will use the signals.
+- **Error-handling architecture**: error categories by UI, API, domain, integration,
+  infrastructure, validation, authorization, timeout, offline, and unexpected-failure level;
+  mapping boundaries; retry/fallback/degraded behavior; escalation; and safe user/API
+  messages.
 - **State and side effects**: pure decision logic, persistence, I/O, external calls, time,
   randomness, transactions, concurrency, retries, idempotency, and consistency boundaries.
 - **Interfaces and contracts**: APIs, events, commands, schemas, protocols, auth, errors,
   compatibility/versioning, ownership, representative payload examples, and fixture/schema
   source of truth for tests.
 - **Quality tactics and trade-offs**: how the design meets performance, reliability,
-  security, modifiability, usability, observability, deployability, build reproducibility,
-  deployment, and cost goals.
+  security, modifiability, usability, observability, diagnosability, deployability, build
+  reproducibility, deployment, and cost goals.
 - **Decision points**: what trade-offs require user input, what options are viable, which
   option is recommended, and whether an ADR is needed.
 - **Test and verification strategy**: how components, contracts, quality attributes, data
@@ -512,8 +530,9 @@ Use **prefix + slug**, no numeric suffix:
    versions, licensing, build tooling, package/artifact formats, documentation tooling,
    hosting, or organizational constraints where they matter.
 3. **Drivers & Constraints** — the FRs/NFRs/use cases, quality-attribute scenarios,
-   stakeholder concerns, build/release/deployment constraints, documentation constraints,
-   external constraints, risks, and assumptions that shape the design.
+   stakeholder concerns, logging/telemetry/error-handling constraints, build/release/
+   deployment constraints, documentation constraints, external constraints, risks, and
+   assumptions that shape the design.
 4. **Layers** — (`LAYER-<SLUG>`); each names its responsibility, allowed dependencies,
    boundary rules, ownership, and whether it belongs to core policy, application orchestration,
    adapter/shell, presentation, data, or infrastructure. Dependencies should be acyclic and justified.
@@ -523,16 +542,18 @@ Use **prefix + slug**, no numeric suffix:
    **component / association diagram** (Mermaid `flowchart` or `classDiagram`) showing
    layers, components, dependency arrows, and core-vs-shell boundaries.
 6. **Interfaces** — (`IFACE-<SLUG>`); contract, inputs/outputs, `owner: COMP-<SLUG>`,
-   protocol/schema, auth/trust boundary, error behavior, versioning/compatibility, and QoS
-   expectations where relevant. For boundary contracts, include representative success and
-   error payload shapes or cite the formal schema/example source that tests must use.
+   protocol/schema, auth/trust boundary, error behavior, diagnostic/correlation fields,
+   versioning/compatibility, and QoS expectations where relevant. For boundary contracts,
+   include representative success and error payload shapes or cite the formal schema/example
+   source that tests must use.
 7. **Core vs. Shell** or **Core vs. Shell / Equivalent Separation** — include a table that classifies each `COMP-` as pure core,
    application/orchestration, adapter/shell, presentation, data, infrastructure, or mixed.
    For the core, list pure decisions, rules, validation, state transitions, calculations,
    reducers, mappers, and invariants. For the shell, list I/O, persistence, network calls,
    UI/navigation, device/browser APIs, framework glue, clocks, randomness, transactions,
-   retries, messaging, analytics, notifications, and observability. Explain how dependencies
-   point inward or through interfaces, how side effects are isolated, and how each category is tested.
+   retries, messaging, analytics, notifications, logging, telemetry, and observability.
+   Explain how dependencies point inward or through interfaces, how side effects are
+   isolated, and how each category is tested.
    If the architecture does not use this terminology, use the equivalent section title and
    explain the equivalent separation or why the split is not applicable.
 8. **Key Flows** — a **sequence diagram** (Mermaid `sequenceDiagram`) per critical use
@@ -555,8 +576,8 @@ Use **prefix + slug**, no numeric suffix:
    for boundary payloads, speed/scope, and whether it is required for the first
    implementation PR or a later PR. Explain how each `COMP-`, `IFACE-`, critical flow,
    `AT-`, and important `NFR-` is tested in isolation and in collaboration, including
-   observability, failure injection, contract-realistic mocks, and migration/rollback checks
-   where relevant.
+   logging/telemetry assertions, observability, failure injection, error-mapping tests,
+   contract-realistic mocks, and migration/rollback checks where relevant.
 12. **Risks & Trade-offs** — (`RISK-<SLUG>`); risk or technical debt, impact, likelihood,
    mitigation, owner, trigger, and residual risk.
 13. **Traceability Matrix** — requirements (`FR-`/`NFR-`/`UC-`/`AT-`) → components →
@@ -605,6 +626,13 @@ Pass-with-fixes.
 - Every component, interface, deployable artifact, documentation artifact, critical `AT-`,
   and important `NFR-` has a named `TEST-` obligation or check level and relevant build,
   deployment, documentation, observability, or operational checks.
+- Logging and telemetry design names the structured signals, correlation/support IDs,
+  sinks, retention/sampling, redaction/privacy rules, and consumers that matter for humans,
+  agents, debugging, support, or operations.
+- Error-handling design covers UI, API, domain, integration, infrastructure, validation,
+  authorization, timeout, offline, and unexpected-failure categories where relevant,
+  including mapping boundaries, recovery/retry/fallback, escalation, and safe user/API
+  messages.
 - Every `TEST-` obligation has a concrete verification oracle: what output, state, record,
   event, DOM, screenshot, log, metric, trace, artifact, deployment signal, or external-call
   observation proves pass/fail.

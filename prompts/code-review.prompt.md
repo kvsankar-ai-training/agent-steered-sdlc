@@ -1,5 +1,5 @@
 ---
-description: Qualitatively review implemented code, tests, docs, build/deploy work, and upstream consistency using existing verification evidence where available.
+description: Qualitatively review implemented code, tests, logging/error-handling, docs, build/deploy work, and upstream consistency using existing verification evidence where available.
 agent: agent
 ---
 
@@ -18,10 +18,10 @@ for this implementation. If a latent upstream issue prevents fair code review, s
 upstream blocker and name the affected IDs/sections.
 
 Use an adversarial posture: try to refute correctness, test implementation quality, TDD claims,
-planned-scope fidelity, implementation/design fit, deployment safety, documentation
-completeness, and quality-gate adequacy. Prefer fresh context, a separate reviewer, or a
-different model/tool when available. If the same agent implemented the code, state that the
-review is not independent.
+planned-scope fidelity, implementation/design fit, logging/telemetry and error-handling
+fitness, deployment safety, documentation completeness, and quality-gate adequacy. Prefer
+fresh context, a separate reviewer, or a different model/tool when available. If the same
+agent implemented the code, state that the review is not independent.
 
 ## Qualitative Review
 
@@ -54,6 +54,13 @@ Score each item 1-5 and give one concrete fix for any score below 5:
 - UI quality and selector resilience: planned styling/layout/responsive/accessibility and
   readable loading/empty/error/validation states are present, while behavior tests remain
   role/text/semantic rather than CSS-coupled unless style itself is under test.
+- Logging and telemetry fitness: planned structured logs, events, metrics, traces,
+  audit/support IDs, correlation propagation, redaction, alert hooks, and human/agent
+  debugging signals are implemented, tested, stable, and free of secrets or excessive noise.
+- Error-handling fitness: UI, API, domain, integration, infrastructure, validation,
+  authorization, timeout, offline, and unexpected failures map to safe messages, typed/
+  documented errors, retries/fallback/degraded behavior, escalation, and logs/telemetry at
+  the right boundary.
 - Correctness: implementation satisfies FR/AT behavior and relevant edge cases.
 - Design fidelity: component boundaries, pure-core/imperative-shell separation, interfaces,
   data ownership, failure handling, and dependency direction match the design.
@@ -64,9 +71,9 @@ Score each item 1-5 and give one concrete fix for any score below 5:
   where planned.
 - Documentation completeness: user/developer docs, examples, generated/reference docs,
   runbooks, troubleshooting, and release/migration notes match behavior where planned.
-- Production quality: validation, error handling, security/privacy, observability,
-  configuration/secrets handling, reliability, accessibility, and performance concerns are
-  handled to the level required by the spec/design.
+- Production quality: validation, error handling, logging/telemetry, security/privacy,
+  observability, configuration/secrets handling, reliability, accessibility, and performance
+  concerns are handled to the level required by the spec/design.
 - Quality-gate fitness: pre-commit/equivalent gates are language-appropriate, thresholded,
   aligned with CI, and not trivially bypassed.
 - Maintainability: code is readable, cohesive, appropriately factored, and avoids dead or

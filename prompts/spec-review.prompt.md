@@ -15,9 +15,9 @@ explicitly asked.
 
 Use an adversarial posture: try to refute the spec, find missing stakeholder needs,
 ambiguous behavior, weak acceptance criteria, missing non-goals, missing build/deployment
-or documentation intent, and traceability theater. Prefer fresh context, a separate
-reviewer, or a different model/tool when available. If the same agent created the spec,
-state that the review is not independent.
+or documentation intent, missing logging/error-handling intent, and traceability theater.
+Prefer fresh context, a separate reviewer, or a different model/tool when available. If the
+same agent created the spec, state that the review is not independent.
 
 ## Qualitative Review
 
@@ -41,13 +41,19 @@ Score each item 1-5 and give one concrete fix for any score below 5:
   design-free, and use "shall" consistently.
 - Supplementary/NFR coverage: performance, security, privacy, reliability, usability,
   accessibility, interoperability, compliance, data, platform, operational,
-  build/deployment, and documentation constraints are considered and measurable where
-  applicable.
+  logging/telemetry, error handling, build/deployment, and documentation constraints are
+  considered and measurable where applicable.
 - UX/presentation quality: UI-facing work has explicit expectations for baseline styling,
   layout, responsive behavior, accessibility, and readable loading/empty/error/validation
   states, or scopes them out deliberately.
 - Boundary contract quality: externally consumed API/event/file/SDK/CLI/webhook success and
   error shapes are defined when consumers or user-visible behavior depend on them.
+- Logging and telemetry quality: required logs, events, metrics, traces, audit records,
+  support IDs, correlation IDs, retention, and redaction/privacy constraints are captured or
+  explicitly scoped out.
+- Error-handling quality: UI, API, domain, integration, infrastructure, validation,
+  authorization, timeout, offline, and unexpected-failure behavior is specified at the
+  externally visible level or explicitly scoped out.
 - Acceptance quality: acceptance tests are black-box, scenario-based, and verify linked
   UC/FR/NFR intent instead of restating requirements.
 - Acceptance granularity: product/system `AT-` items may be broad acceptance intent,

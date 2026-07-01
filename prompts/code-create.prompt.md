@@ -16,9 +16,9 @@ Optimize so `/code-assess` finds nothing to fix.
 2. **One PR at a time** — implement the lowest unbuilt PR whose deps are met; keep ≤300 LOC.
 3. **Always green** — the full suite passes before a PR is done; never leave red on trunk.
 4. **Traceable** — tests name the FR/AT/COMP/TEST and PR they cover; nothing built off-plan.
-5. **Production quality** — error handling, input validation, reproducible build artifacts,
-   deployable configuration/scripts when planned, accurate user/developer documentation when
-   planned, no dead code, lint clean.
+5. **Production quality** — error handling, input validation, useful structured logging/
+   telemetry where planned, reproducible build artifacts, deployable configuration/scripts
+   when planned, accurate user/developer documentation when planned, no dead code, lint clean.
 6. **Planned scope only** — edit only the files, directories, modules, config, docs,
    generated artifacts, and spec/design/plan sections listed in the PR's Planned Touch Set.
 
@@ -37,9 +37,10 @@ Before writing tests or code, confirm all of the following:
   design explicitly says no additional LLD is needed for this slice/change.
 - `plan.md` declares `Plan Type: Implementation` and `Implementation Readiness: Code-ready`.
 - The plan contains concrete `PR-` items, Planned Touch Sets, Test Levels, Red steps,
-  Green steps, dependencies, quality gates, and build/deployment work or an explicit
-  rationale that no build/deployment change is required, plus documentation work or an
-  explicit rationale that no documentation change is required.
+  Green steps, dependencies, quality gates, logging/error-handling work or an explicit
+  rationale that no logging/error-handling change is required, build/deployment work or an
+  explicit rationale that no build/deployment change is required, plus documentation work or
+  an explicit rationale that no documentation change is required.
 
 If any item is missing, **stop** and tell the user which artifact is not code-ready and what
 is needed next: breakdown plan, child spec, HLD, LLD, ADR, interface contract, test
@@ -48,10 +49,10 @@ strategy, or implementation plan. This is a normal workflow outcome, not a codin
 ## Clarification and YOLO mode
 
 Default behavior is input-gated: pause and ask one focused question at a time when missing
-information would materially change implementation behavior, test intent, quality gates,
-build artifact shape, deployment scripts/manifests, data migration, rollout/rollback,
-documentation content, security/privacy posture, or planned touch scope. Do not silently
-invent behavior outside the spec/design/plan.
+information would materially change implementation behavior, test intent, logging/telemetry
+signals, error-handling behavior, quality gates, build artifact shape, deployment scripts/
+manifests, data migration, rollout/rollback, documentation content, security/privacy
+posture, or planned touch scope. Do not silently invent behavior outside the spec/design/plan.
 
 The user may opt into **YOLO mode** with phrases such as "yolo", "use your judgment", "make
 reasonable assumptions", or "proceed without questions". In YOLO mode, make the narrowest
@@ -84,8 +85,8 @@ test levels before or alongside the production code using Red/Green/Refactor:
   planned. Prefer role, label, text, and semantic selectors; avoid coupling behavior tests
   to CSS class names unless the style contract itself is under test.
 - Write **quality-attribute checks** for performance, reliability, security, privacy,
-  resilience, observability, offline/sync, rollout/rollback, and operational behavior when
-  planned.
+  resilience, observability, logging/telemetry, error handling, offline/sync,
+  rollout/rollback, and operational behavior when planned.
 - Write or run **build/deployment checks** when planned: reproducible package/image/static
   bundle/mobile build output, generated artifact validation, migration validation,
   deployment dry-run/plan/lint, manifest/IaC validation, smoke checks, and rollback checks.
@@ -197,11 +198,15 @@ Read `plan.md`, `design.md`, `spec.md`. Apply the Code-ready scope gate above. T
 the next PR (lowest number, deps merged, not yet built). State the PR, its Red tests, Green
 scope, Planned Touch Set, the COMP/FR/AT/TEST it covers, the planned test levels, the
 verification oracle for each planned test, any likely supplemental inner-test discovery
-areas, and the quality-gate command(s) that must pass at the PR boundary. Also state any planned
-build/deployment work: build command, expected artifact, deployment validation command,
-smoke check, rollback check, or `None` with the plan's rationale. Also state planned
-documentation work: user docs, developer docs, API/reference docs, examples, runbooks,
-release/migration notes, doc validation command, or `None` with the plan's rationale.
+areas, and the quality-gate command(s) that must pass at the PR boundary. Also state any
+planned logging/telemetry work: structured fields, events, metrics, traces, correlation/
+support IDs, redaction, alert hooks, or `None` with the plan's rationale. State planned
+error-handling work: UI/API/domain/integration/infrastructure mapping, retry/fallback/
+degraded behavior, safe messages, or `None` with the plan's rationale. Also state any
+planned build/deployment work: build command, expected artifact, deployment validation
+command, smoke check, rollback check, or `None` with the plan's rationale. Also state
+planned documentation work: user docs, developer docs, API/reference docs, examples,
+runbooks, release/migration notes, doc validation command, or `None` with the plan's rationale.
 
 Before editing, compare every intended file/section change against the PR's Planned Touch
 Set. If the plan does not include a Planned Touch Set, or if the implementation requires
@@ -221,6 +226,10 @@ unless the current PR explicitly exists to configure quality gates.
 If build/deployment files, generated artifacts, scripts, pipeline config, IaC, manifests,
 or release documentation are required but absent from the Planned Touch Set, stop and ask
 for a plan/design update before editing them.
+
+If logging/telemetry config, logging adapters, event/metric/trace schemas, alert hooks,
+correlation propagation, redaction logic, or error-handling modules are required but absent
+from the Planned Touch Set, stop and ask for a plan/design/spec update before editing them.
 
 If user/developer docs, README/API docs, examples, generated reference docs, runbooks,
 troubleshooting, migration notes, or release notes are required but absent from the Planned
@@ -247,6 +256,11 @@ When testing boundary errors, include representative multi-field or multi-cause 
 where the contract allows them, and assert the user/API-facing normalized result rather than
 raw object stringification or framework internals.
 
+When testing logging or telemetry, assert the stable structured signal: event name, level,
+correlation/support ID, metric name/value/tags, trace span attributes, audit field, redaction
+behavior, or absence of sensitive data. Do not assert volatile timestamps, stack traces, or
+formatting details unless the format is the contract.
+
 ## Step 3 — Green
 
 Write the minimum code to pass. Run the suite; show all green. No extra scope.
@@ -262,6 +276,12 @@ generated reference docs, runbooks, troubleshooting, release/migration notes, or
 Keep docs aligned with actual behavior and contracts; do not document unimplemented future
 behavior as if it exists.
 
+When the PR owns logging/telemetry or error-handling work, implement only the planned
+structured signals, correlation/support IDs, redaction, alert hooks, error mapping,
+retry/fallback/degraded behavior, and safe UI/API messages. Do not log secrets, raw tokens,
+PII beyond the approved contract, stack traces to user-visible surfaces, raw framework
+objects, or unstable internals meant only for local debugging.
+
 ## Step 4 — Refactor
 
 Improve names/structure with tests staying green. Run formatters, linters, type checks,
@@ -269,7 +289,8 @@ complexity checks, security/dependency scans, coverage, and the suite again thro
 configured local quality gate where possible. Re-run planned build/package and
 deployment-validation commands after refactoring when touched files can affect them. Re-run
 planned documentation build/generation/link/readability checks when touched files can affect
-them.
+them. Re-run planned logging/telemetry/error-handling tests when touched files can affect
+diagnostic signal shape, redaction, error mapping, retries, fallback, or user/API messages.
 
 ## Step 5 — Verify the PR
 
@@ -306,6 +327,11 @@ Then run the planned documentation checks. If the PR touches user/developer docs
 contracts, examples, generated reference docs, runbooks, troubleshooting, release notes, or
 migration notes, run the planned doc build/generation/link/readability/accessibility checks
 and verify examples/snippets where practical. Record any check that cannot run locally and why.
+
+Then run the planned logging/telemetry and error-handling checks. If the PR touches
+diagnostic signal shape, redaction, correlation/support IDs, event/metric/trace schemas,
+alert hooks, or error mapping/retry/fallback/degraded behavior, run the planned tests or
+checks and record any that cannot run locally and why.
 
 Then run or perform the corresponding `/code-assess` for the completed PR boundary. When
 sub-agents are available, use fresh-context Mechanical Verifier and Qualitative Reviewer
@@ -354,6 +380,9 @@ first completed PR boundary.
   truth and do not drift into bespoke mock shapes.
 - UI-facing implementation includes the planned presentation/layout/responsive/accessibility
   and readable state work without making behavior tests brittle.
+- Each PR implements the logging/telemetry and error-handling work assigned in the plan,
+  verifies stable structured signals and failure behavior, and avoids leaking secrets,
+  stack traces, raw objects, or unstable internals to users, logs, telemetry, or agents.
 - Each PR implements the build/deployment work assigned in the plan, verifies the expected
   artifact or deployment validation outcome, and avoids live deployment unless explicitly
   requested.

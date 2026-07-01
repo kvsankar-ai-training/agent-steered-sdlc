@@ -1,5 +1,5 @@
 ---
-description: Interview the user, then author a work plan that translates the spec and design into reviewable, test-first PRs (≤300 LOC each), including planned docs/build/deploy work.
+description: Interview the user, then author a work plan that translates the spec and design into reviewable, test-first PRs (≤300 LOC each), including planned logging/error-handling/docs/build/deploy work.
 agent: agent
 ---
 
@@ -16,13 +16,14 @@ nothing to fix.
 2. **Red/Green TDD** — every PR writes failing tests first (Red), then minimal code to pass
    (Green), then refactor. The plan states both Red and Green steps per PR.
 3. **Full coverage** — every `FR-`/`UC-`, every `NFR-`, every `AT-`, every design
-   `COMP-`, every design `TEST-` obligation, and every required docs/build/deploy concern
-   is delivered by at least one PR.
+   `COMP-`, every design `TEST-` obligation, and every required logging/error-handling/
+   docs/build/deploy concern is delivered by at least one PR.
    Nothing in spec/design is left unbuilt, undocumented, or unverifiable.
 4. **Always shippable** — order PRs so each merges green, behind a flag if needed; no PR
    depends on a later one, and build/deployment capability is introduced before code that
    depends on it.
-5. **Production quality** — each PR includes tests, error handling, and meets its NFRs.
+5. **Production quality** — each PR includes tests, logging/telemetry where relevant, error
+   handling, and meets its NFRs.
 6. **Explicit touch scope** — each PR declares the files, directories, modules, config files,
    docs, generated artifacts, and spec/design/plan sections it is expected to touch.
 7. **Build and deployment are planned work** — build scripts, package manifests, generated
@@ -31,6 +32,9 @@ nothing to fix.
 8. **User and developer docs are planned work** — user guides, in-product help, README/API
    docs, examples, runbooks, troubleshooting, migration notes, release notes, generated
    reference docs, and doc validation checks are assigned to explicit work items or PRs.
+9. **Logging and error handling are planned work** — structured logging, telemetry,
+   correlation/support IDs, redaction, alert hooks, error mapping, retry/fallback, degraded
+   behavior, and safe UI/API messages are assigned to explicit work items or PRs.
 
 ## Work scope, plan type, and readiness
 
@@ -100,18 +104,19 @@ Use the same section order for every plan, but tune the content to the declared 
 
 - **Product/system plan** is normally a Breakdown plan. It carries milestones, child
   feature/component `WORK-` items, dependencies, required child specs/designs/ADRs, research
-  or decision needs, build/release/deployment tracks, documentation tracks, sequencing,
-  parallel tracks, major risks, and readiness targets. It should not list implementation PRs
-  unless the system is trivially small.
+  or decision needs, logging/error-handling tracks, build/release/deployment tracks,
+  documentation tracks, sequencing, parallel tracks, major risks, and readiness targets. It
+  should not list implementation PRs unless the system is trivially small.
 - **Feature/component plan** carries either child slice/change `WORK-` items or concrete
   implementation PRs when the feature/component is already code-ready. It identifies child
   spec/LLD needs, dependencies, integration order, test strategy allocation, touch-scope
-  risks, build/deployment impacts, documentation impacts, and the point where work becomes
-  PR-ready.
+  risks, logging/error-handling impacts, build/deployment impacts, documentation impacts,
+  and the point where work becomes PR-ready.
 - **Slice/change plan** is an Implementation plan. It carries `PR-` items, Planned Touch
   Sets, Red/Green steps, test levels, LOC estimates, quality gates, rollback notes,
-  build/deployment verification, documentation updates/checks, dependencies,
-  parallel/worktree guidance, and traceability to the exact FR/AT/COMP/TEST items.
+  logging/error-handling verification, build/deployment verification, documentation
+  updates/checks, dependencies, parallel/worktree guidance, and traceability to the exact
+  FR/AT/COMP/TEST items.
 
 ## Test responsibility in this command
 
@@ -132,7 +137,8 @@ For each PR, list the test levels it will add or update:
 - **UI/accessibility/visual tests** for frontend/mobile routes, screens, components, focus,
   keyboard/touch behavior, semantics, contrast, and visual regressions.
 - **Quality-attribute checks** for performance, reliability, security, privacy, resilience,
-  observability, offline/sync, rollout/rollback, and operational behavior.
+  observability, logging/telemetry, error handling, offline/sync, rollout/rollback, and
+  operational behavior.
 - **Build/deployment checks** for reproducible artifact creation, package metadata,
   container/image/static/mobile build output, migration validation, deployment dry runs,
   infrastructure/deployment manifest validation, smoke checks, and rollback verification.
@@ -186,6 +192,9 @@ Read `spec.md` and `design.md` first. Then interview the user **one question at 
 - **Documentation tooling and ownership**: doc source locations, user/developer doc
   audiences, generated reference docs, doc build command, link checker, publishing path,
   owner/reviewer, and freshness/versioning expectations.
+- **Logging, telemetry, and error-handling ownership**: which PRs own structured log fields,
+  events, metrics, traces, audit/support IDs, correlation propagation, redaction, alert
+  hooks, error mapping, retry/fallback/degraded behavior, and safe UI/API messages.
 - **Done definition**: coverage bar, lint/format gates, review rules.
 - **Test mix**: which acceptance, unit, component, contract, integration, UI/accessibility,
   quality-attribute, migration, and operational checks are required by the spec/design; for
@@ -199,9 +208,9 @@ Read `spec.md` and `design.md` first. Then interview the user **one question at 
 - **Parallel execution**: which PRs can be built concurrently, whether Git worktrees should
   be used for independent branches, and which files/modules are likely to conflict.
 - **Touch scope**: which files, directories, modules, generated artifacts, config files,
-  migrations, build/deployment scripts, CI/CD/IaC/manifests, user/developer docs, examples,
-  runbooks, release notes, generated reference docs, and spec/design/plan sections each PR
-  is allowed or expected to touch.
+  migrations, logging/telemetry config, error-handling modules, build/deployment scripts,
+  CI/CD/IaC/manifests, user/developer docs, examples, runbooks, release notes, generated
+  reference docs, and spec/design/plan sections each PR is allowed or expected to touch.
 - **Slicing limits**: anything that must not exceed the 300-LOC PR ceiling.
 
 State assumptions explicitly and list them. Keep asking until slicing is unambiguous. In
@@ -224,9 +233,9 @@ work.
    useful, and done-definition in one paragraph. Include explicit `Work Scope:`,
    `Plan Type: Breakdown | Implementation`, and `Implementation Readiness:` lines.
 2. **Strategy** — Red/Green TDD loop, the ≤300-LOC PR rule, flags, always-green ordering,
-   branch/worktree isolation, integration cadence, build artifact strategy, deployment
-   strategy, documentation strategy, and whether this plan decomposes parent work or
-   implements code-ready work.
+   branch/worktree isolation, integration cadence, logging/error-handling strategy, build
+   artifact strategy, deployment strategy, documentation strategy, and whether this plan
+   decomposes parent work or implements code-ready work.
 3. **Milestones** — list (`MILE-<AREA>-<NAME>`); each groups child work or PRs toward a
    coherent delivery slice.
 4. **Pull Requests / Child Work Items** — for a Breakdown plan, list
@@ -238,7 +247,11 @@ work.
    **Build/Deploy Work** (artifact, script, pipeline, manifest, migration, dry-run, smoke,
    or rollback work owned by this PR, or `None` with rationale); **Documentation Work**
    (user docs, developer docs, API/reference docs, examples, runbooks, troubleshooting,
-   release/migration notes, generated docs, or `None` with rationale); **Test Levels**
+   release/migration notes, generated docs, or `None` with rationale);
+   **Logging/Telemetry Work** (structured logs, events, metrics, traces, audit/support IDs,
+   correlation, redaction, alert hooks, or `None` with rationale); **Error Handling Work**
+   (UI/API/domain/integration/infrastructure error mapping, retry/fallback/degraded
+   behavior, safe messages, or `None` with rationale); **Test Levels**
    (acceptance/e2e, unit, component, contract, integration, UI/accessibility/visual,
    quality/NFR, build/deploy, docs, migration/ops as applicable); **Contract Fixtures**
    (shared fixture/schema/generated-client/contract-test source for boundary payloads, or
@@ -313,9 +326,9 @@ Pass-with-fixes.
 - Every `AT-` maps to an executable acceptance/e2e/API workflow test PR or to a justified
   non-code verification PR/check.
 - Every design `TEST-` obligation maps to the PR or child work item that writes/runs that
-  executable unit, component, contract, integration, UI, quality, build/deploy, docs,
-  migration, or operational check; lower-level tests from the design are scheduled near the
-  code they protect.
+  executable unit, component, contract, integration, UI, quality, logging/telemetry,
+  error-handling, build/deploy, docs, migration, or operational check; lower-level tests
+  from the design are scheduled near the code they protect.
 - Every PR-level test assignment states a verification oracle concrete enough for
   `/code-create` to write a meaningful failing test and for `/code-review` to reject weak or
   indirect assertions.
@@ -323,6 +336,8 @@ Pass-with-fixes.
   truth used by tests; invented mock payload shapes are treated as plan defects.
 - UI-facing PRs include planned presentation/layout/responsive/accessibility/error-state
   work or explicitly state why that quality work is out of scope.
+- Logging/telemetry and error-handling work is assigned to PRs whenever the spec/design
+  calls for it; otherwise the plan states why it is out of scope.
 - Build artifact creation, packaging, deployment scripts/manifests/IaC, deployment dry runs,
   smoke checks, and rollback verification are assigned to PRs whenever the spec/design calls
   for them; otherwise the plan states why they are out of scope.

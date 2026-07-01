@@ -41,11 +41,12 @@ Select the narrowest command that matches the user's current artifact:
 - `/plan-review`: qualitatively review plan and stop if spec/design issues or planned scope issues block implementation.
 - `/plan-assess`: run `/plan-verify` plus `/plan-review` as the full plan gate.
 - `/code-create`: implement within the planned touch set using Red/Green/Refactor TDD,
-  configured quality gates, and planned documentation/build/deployment verification.
+  configured quality gates, planned logging/error-handling work, and planned
+  documentation/build/deployment verification.
 - `/code-verify`: run tests, coverage, structural code checks, pre-commit/equivalent gates,
-  and planned build/docs/deployment verification.
+  and planned logging/error-handling/build/docs/deployment verification.
 - `/code-review`: qualitatively review implementation, tests, traceability, quality gates,
-  and upstream consistency.
+  logging/error-handling fitness, and upstream consistency.
 - `/code-assess`: run `/code-verify` plus `/code-review` as the full code gate.
 
 When the user invokes this skill generally instead of naming a specific stage,
@@ -108,29 +109,33 @@ pause after an artifact unless the user also explicitly asks for end-to-end cont
   slice/change. Ask only when the mapping is ambiguous or materially changes the artifact.
 - Apply the artifact matrix:
   - Product/system spec carries mission, stakeholders, boundary, product needs, non-goals,
-    major capabilities, representative use cases, major NFRs, build/release/deployment
-    expectations, user/developer documentation expectations, broad acceptance intent, and
-    child-artifact needs; design carries HLD context, major containers/services/modules,
-    drivers, boundaries, data ownership, quality tactics, build/package/release strategy,
-    deployment/operations, documentation strategy, ADRs, risks, and decomposition
+    major capabilities, representative use cases, major NFRs, logging/telemetry and
+    error-handling expectations, build/release/deployment expectations, user/developer
+    documentation expectations, broad acceptance intent, and child-artifact needs; design
+    carries HLD context, major containers/services/modules, drivers, boundaries, data
+    ownership, quality tactics, logging/telemetry strategy, error-handling strategy,
+    build/package/release strategy, deployment/operations, documentation strategy, ADRs, risks, and decomposition
     candidates; plan is normally a Breakdown plan with feature/component `WORK-` items,
-    dependencies, child artifact needs, build/deployment tracks, documentation tracks,
-    parallel tracks, and readiness targets.
+    dependencies, child artifact needs, logging/error-handling tracks, build/deployment
+    tracks, documentation tracks, parallel tracks, and readiness targets.
   - Feature/component spec carries parent references, local behavior, FR/NFR/AT coverage,
-    edge cases, build/deployment constraints, documentation constraints, dependencies, and
-    non-goals; design carries responsibilities, contracts, local state/data, runtime flows,
-    core/shell split, dependencies, build/deployment impacts, documentation impacts,
-    decisions, risks, and explicit `TEST-` obligations; plan carries child slice/change work
-    or PRs, integration order, `AT-`/`TEST-` allocation, build/deployment allocation, documentation
+    edge cases, logging/telemetry and error-handling constraints, build/deployment
+    constraints, documentation constraints, dependencies, and non-goals; design carries
+    responsibilities, contracts, local state/data, runtime flows, core/shell split,
+    dependencies, logging/error-handling impacts, build/deployment impacts, documentation
+    impacts, decisions, risks, and explicit `TEST-` obligations; plan carries child
+    slice/change work or PRs, integration order, `AT-`/`TEST-` allocation,
+    logging/error-handling allocation, build/deployment allocation, documentation
     allocation, and touch-scope risks.
   - Slice/change spec carries the exact requirement delta, parent IDs refined/preserved,
-    changed/unchanged behavior, documentation deltas, and acceptance criteria; design
-    carries LLD-level local changes, API/schema/data deltas, failure paths,
-    validation/policy logic, build/deployment script or artifact changes, documentation
-    changes, migration/rollback, side effects, `TEST-` obligations/doubles, and likely touch candidates;
+    changed/unchanged behavior, logging/error-handling deltas, documentation deltas, and
+    acceptance criteria; design carries LLD-level local changes, API/schema/data deltas,
+    failure paths, validation/policy logic, logging/telemetry changes, build/deployment
+    script or artifact changes, documentation changes, migration/rollback, side effects,
+    `TEST-` obligations/doubles, and likely touch candidates;
     plan carries concrete `PR-` items, Planned Touch Sets, Red/Green steps, `AT-`/`TEST-` allocation,
-    LOC estimates, quality gates, build/deployment verification, documentation checks,
-    rollback, dependencies, and worktree guidance.
+    LOC estimates, quality gates, logging/error-handling verification, build/deployment
+    verification, documentation checks, rollback, dependencies, and worktree guidance.
 - Treat test ownership as part of artifact ownership: specs define `AT-` acceptance
   criteria at product/system, feature/component, and slice/change scope; designs define
   explicit `TEST-` executable test obligations for lower-level and workflow checks; plans
@@ -160,14 +165,22 @@ pause after an artifact unless the user also explicitly asks for end-to-end cont
   documentation architecture, source locations, generated/reference docs, publishing,
   ownership, and validation checks; plans assign documentation files and checks to work
   items or PRs; code updates docs with implementation and validates them where practical.
+- Treat logging, telemetry, and error handling as part of artifact ownership: specs define
+  externally relevant human/agent/operator diagnostics, privacy/redaction constraints,
+  telemetry events/metrics/traces, error categories, user-facing error behavior, and
+  support/debugging needs or non-goals; designs define structured logging, correlation
+  IDs, event/metric/trace contracts, sinks/retention, redaction, alert hooks, and
+  layer-specific error mapping/recovery/degradation strategy; plans assign that work and
+  verification to PRs; code implements and tests it without leaking secrets, stack traces,
+  raw objects, or unstable internals to users or logs.
 - Treat downstream assessment/review as an upstream validation point. If design, plan, or
   code assessment/review reveals a latent issue in an earlier artifact, stop and tell the user which
   upstream artifact needs revision.
 - For defect remediation, reconcile artifacts before treating the work as code-only. If a
   defect exposes missing requirements, unclear boundary contracts, omitted UX quality,
-  unrealistic tests, or mock drift, update the spec/design/plan and record the prevention
-  lesson in the review report, ADR, decision log, or retrospective note used by the target
-  repo.
+  missing logging/telemetry/error-handling intent, unrealistic tests, or mock drift, update
+  the spec/design/plan and record the prevention lesson in the review report, ADR, decision
+  log, or retrospective note used by the target repo.
 - Use an adversarial review posture. Prefer a fresh context, separate reviewer, or different
   model/tool when available. If the same agent performs creation and review, say review was
   not independent and actively seek counterexamples, traceability theater, and unverified
@@ -187,9 +200,10 @@ pause after an artifact unless the user also explicitly asks for end-to-end cont
     `/plan-review`: qualitatively review upstream fitness and plan quality; `/plan-assess`:
     do both.
   - `/code-verify`: run upstream checkers, `check_code.py`, pre-commit/equivalent gates,
-    and planned build/docs/deployment checks; `/code-review`: qualitatively review
-    code-readiness, implementation quality, test implementation quality, verification-oracle
-    rigor, TDD evidence, scope fidelity, and gate fitness; `/code-assess`: do both.
+    and planned logging/error-handling/build/docs/deployment checks; `/code-review`:
+    qualitatively review code-readiness, implementation quality, test implementation
+    quality, verification-oracle rigor, logging/telemetry/error-handling fitness, TDD
+    evidence, scope fidelity, and gate fitness; `/code-assess`: do both.
 - Use the lightweight track for spikes, throwaway prototypes, exploratory data/ML work,
   proof-of-concept integrations, or infrastructure investigations. Mark these artifacts
   Exploratory, timebox them, record goal/non-goals/risks/evidence/disposal criteria, and do
